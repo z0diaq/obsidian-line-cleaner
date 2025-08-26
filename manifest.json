@@ -1,0 +1,11 @@
+{
+	"id": "line-cleaner",
+	"name": "Line Cleaner",
+	"version": "0.1.0",
+	"minAppVersion": "0.15.0",
+	"description": "Remove lines containing specific strings from files with configurable backup options",
+	"author": "Piotr Tkaczyk",
+	"authorUrl": "https://github.com/z0diaq",
+	"fundingUrl": "https://buymeacoffee.com/z0diaq",
+	"isDesktopOnly": false
+}

@@ -1,0 +1,122 @@
+# Line Cleaner - Obsidian Plugin
+
+A powerful Obsidian plugin that removes lines and ranges of content from your files with configurable backup options.
+
+## Usecases
+
+### Templated workflow
+
+1. Create templates with comments explaining the content or purpose of sections.
+    - Hint: Use embedded notes to add more complex content.
+2. Create new note from template and fill the parts as usual.
+3. Use this plugin to remove sections of the note along with the comments making note clean.
+
+### Note postprocessing
+
+1. Create a note with some draft content. Add comments to specify what needs to be done.
+2. Update draft content as needed.
+3. Use this plugin to remove the comments for finalized sections.
+
+## Features
+
+- **Range-Based Removal**: Remove content between start and end markers while preserving partial line content
+- **Link Cleaning**: Convert Markdown links to backticked text while preserving other formatting
+- **Single Line Removal**: Remove entire lines containing specific markers
+- **Multiple Access Methods**: Ribbon button, context menus, and command palette
+- **Configurable Markers**: Customize all removal strings in settings
+- **Automatic Backups**: Optional backup creation with timestamp (`filename_HHmmss.ext`)
+- **Safe Operations**: Confirmation notices and error handling
+
+## Usage
+
+### Access Methods
+1. **Ribbon Button**: Click the trash icon in the left sidebar to clean the current active file
+2. **File Context Menu**: Right-click any file in the file explorer and select "Clean lines"
+3. **Editor Context Menu**: Right-click in the editor and select "Clean lines"
+4. **Command Palette**: Search for "Clean lines from current file"
+
+### Settings
+Access plugin settings via Settings → Community Plugins → Line Cleaner:
+
+**Range Removal:**
+- **Range Start Marker**: Text marking the beginning of content to remove (default: `%% remove from here %%`)
+- **Range End Marker**: Text marking the end of content to remove (default: `%% remove till here %%`)
+
+**Link Cleaning:**
+- **Link Cleaning Marker**: Lines containing this string will have their links converted to backticked text (default: `%% clean me %%`)
+
+**Single Line Removal:**
+- **Single Line Removal Marker**: Lines containing this exact string will be completely removed (default: `%% remove me %%`)
+
+**Backup Options:**
+- **Create Backup**: Toggle automatic backup creation before modifications
+
+### Examples
+
+**Range Removal:**
+```
+some text %% remove from here %%
+line to remove
+another line to remove
+%% remove till here %% remaining text
+```
+**Result:**
+```
+some text remaining text
+```
+
+**Link Cleaning:**
+```
+Check [[My Note]] and [Google](https://google.com) %% clean me %%
+```
+**Result:**
+```
+Check `My Note` and `Google` %% clean me %%
+```
+
+**Single Line Removal:**
+```
+This line stays
+%% remove me %% This entire line is removed
+This line also stays
+```
+**Result:**
+```
+This line stays
+This line also stays
+```
+
+## Installation
+
+### From Obsidian Community Plugins (Recommended)
+1. Open Obsidian Settings
+2. Go to Community Plugins
+3. Search for "Line Cleaner"
+4. Install and enable the plugin
+
+### Manual Installation
+1. Download the latest release files (`main.js`, `manifest.json`, `styles.css`)
+2. Create folder `VaultFolder/.obsidian/plugins/line-cleaner/`
+3. Copy the files to this folder
+4. Reload Obsidian and enable the plugin
+
+## Development
+
+### Building
+```bash
+npm install
+npm run build
+```
+
+### Development Mode
+```bash
+npm run dev
+```
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Support
+
+If you find this plugin helpful, consider supporting its development!
