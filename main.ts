@@ -55,7 +55,10 @@ export default class LineCleanerPlugin extends Plugin {
 	}
 
 	onunload() {
-		// Clean up resources if needed
+        // Event listeners are automatically cleaned up by registerEvent()
+        // Ribbon icons are automatically cleaned up by addRibbonIcon()
+        // Commands are automatically cleaned up by addCommand()
+        // Settings tabs are automatically cleaned up by addSettingTab()
 	}
 
 	async loadSettings() {
@@ -68,11 +71,17 @@ export default class LineCleanerPlugin extends Plugin {
 
 	async cleanCurrentFile() {
 		const activeFile = this.app.workspace.getActiveFile();
-		if (!activeFile) {
-			new Notice('No active file to clean');
-			return;
-		}
-		await this.cleanFile(activeFile);
+        if (!activeFile) {
+            new Notice('No active file to clean');
+            return;
+        }
+        
+        if (activeFile.extension !== 'md') {
+            new Notice('Line Cleaner only works with Markdown files');
+            return;
+        }
+        
+        await this.cleanFile(activeFile);
 	}
 
 	async cleanFile(file: TFile) {
@@ -86,15 +95,25 @@ export default class LineCleanerPlugin extends Plugin {
 			processedContent = rangeResult.content;
 			totalRemovals += rangeResult.removals;
 
+			// Then, process comment cleaning
+			const commentResult = this.processCommentCleaning(processedContent);
+			processedContent = commentResult.content;
+			totalRemovals += commentResult.removals;
+
 			// Then, process link cleaning
 			const linkResult = this.processLinkCleaning(processedContent);
 			processedContent = linkResult.content;
 			totalRemovals += linkResult.removals;
 
-			// Finally, process single-line removals
+			// Then, process single-line removals
 			const singleResult = this.processSingleLineRemovals(processedContent);
 			processedContent = singleResult.content;
 			totalRemovals += singleResult.removals;
+
+			// Finally, process empty line limiting
+			const emptyLineResult = this.processEmptyLineLimiting(processedContent);
+			processedContent = emptyLineResult.content;
+			totalRemovals += emptyLineResult.removals;
 
 			// Check if any changes were made
 			if (processedContent === content) {
@@ -162,6 +181,41 @@ export default class LineCleanerPlugin extends Plugin {
 		return { content: cleanedContent, removals: linesToRemove };
 	}
 
+	processCommentCleaning(content: string): { content: string, removals: number } {
+		let processedContent = content;
+		let removals = 0;
+		const cleanMarker = this.settings.commentCleanerString;
+		let searchStart = 0;
+
+		// Process content to find and remove comments containing the marker
+		while (searchStart < processedContent.length) {
+			const startIndex = processedContent.indexOf('%%', searchStart);
+			if (startIndex === -1) break;
+
+			const endIndex = processedContent.indexOf('%%', startIndex + 2);
+			if (endIndex === -1) break; // No matching closing %%
+
+			// Extract the comment content (between the %% markers)
+			const commentContent = processedContent.substring(startIndex + 2, endIndex);
+			
+			// Check if this comment contains the clean marker
+			if (commentContent.includes(cleanMarker)) {
+				// Remove this entire comment (including the %% markers)
+				const beforeComment = processedContent.substring(0, startIndex);
+				const afterComment = processedContent.substring(endIndex + 2);
+				processedContent = beforeComment + afterComment;
+				removals++;
+				// Continue searching from the same position since content shifted
+				searchStart = startIndex;
+			} else {
+				// Skip this comment and continue searching after it
+				searchStart = endIndex + 2;
+			}
+		}
+
+		return { content: processedContent, removals };
+	}
+
 	processLinkCleaning(content: string): { content: string, removals: number } {
 		const lines = content.split('\n');
 		const cleanMarker = this.settings.cleanLinksString;
@@ -201,6 +255,32 @@ export default class LineCleanerPlugin extends Plugin {
 		processedLine = processedLine.replace(this.settings.cleanLinksString, '');
 
 		return processedLine;
+	}
+
+	processEmptyLineLimiting(content: string): { content: string, removals: number } {
+		const lines = content.split('\n');
+		const maxConsecutive = this.settings.maxConsecutiveEmptyLines;
+		const processedLines: string[] = [];
+		let consecutiveEmptyCount = 0;
+		let removals = 0;
+
+		for (const line of lines) {
+			const isEmptyLine = line.trim() === '';
+			
+			if (isEmptyLine) {
+				consecutiveEmptyCount++;
+				if (consecutiveEmptyCount <= maxConsecutive) {
+					processedLines.push(line);
+				} else {
+					removals++;
+				}
+			} else {
+				consecutiveEmptyCount = 0;
+				processedLines.push(line);
+			}
+		}
+
+		return { content: processedLines.join('\n'), removals };
 	}
 
 	async createBackup(file: TFile, content: string) {
@@ -283,6 +363,10 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				.setPlaceholder('%% remove from here %%')
 				.setValue(this.plugin.settings.rangeStartString)
 				.onChange(async (value) => {
+					if (value.trim() === '') {
+						new Notice('Range start marker cannot be empty');
+						return;
+					}
 					this.plugin.settings.rangeStartString = value;
 					await this.plugin.saveSettings();
 				}));
@@ -294,6 +378,10 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				.setPlaceholder('%% remove till here %%')
 				.setValue(this.plugin.settings.rangeEndString)
 				.onChange(async (value) => {
+					if (value.trim() === '') {
+						new Notice('Range end marker cannot be empty');
+						return;
+					}
 					this.plugin.settings.rangeEndString = value;
 					await this.plugin.saveSettings();
 				}));
@@ -308,21 +396,62 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				.setPlaceholder('%% clean me %%')
 				.setValue(this.plugin.settings.cleanLinksString)
 				.onChange(async (value) => {
+					if (value.trim() === '') {
+						new Notice('Link cleaning marker cannot be empty');
+						return;
+					}
 					this.plugin.settings.cleanLinksString = value;
 					await this.plugin.saveSettings();
 				}));
 
+		containerEl.createEl('h3', { text: 'Comment Cleaning' });
+		containerEl.createEl('p', { text: 'Remove specific %% comments %% that contain this marker. Only the comment containing the marker is removed.' });
+
+		new Setting(containerEl)
+			.setName('Comment cleaning marker')
+			.setDesc('Only comments containing this marker will be removed (marker must be inside the comment)')
+			.addText(text => text
+				.setPlaceholder('remove this comment')
+				.setValue(this.plugin.settings.commentCleanerString)
+				.onChange(async (value) => {
+					if (value.trim() === '') {
+						new Notice('Comment cleaning marker cannot be empty');
+						return;
+					}
+					this.plugin.settings.commentCleanerString = value;
+					await this.plugin.saveSettings();
+				}));
+
 		containerEl.createEl('h3', { text: 'Single Line Removal' });
-		containerEl.createEl('p', { text: 'Remove entire lines containing this marker (processed after link cleaning).' });
+		containerEl.createEl('p', { text: 'Remove entire lines containing this marker (processed after comment and link cleaning).' });
 
 		new Setting(containerEl)
 			.setName('Single line removal marker')
 			.setDesc('Lines containing this exact string will be completely removed')
 			.addText(text => text
-				.setPlaceholder('%% remove me %%')
+				.setPlaceholder('%% remove line %%')
 				.setValue(this.plugin.settings.removalString)
 				.onChange(async (value) => {
+					if (value.trim() === '') {
+						new Notice('Single line removal marker cannot be empty');
+						return;
+					}
 					this.plugin.settings.removalString = value;
+					await this.plugin.saveSettings();
+				}));
+
+		containerEl.createEl('h3', { text: 'Empty Line Limiting' });
+		containerEl.createEl('p', { text: 'Control the maximum number of consecutive empty lines to keep between content lines.' });
+
+		new Setting(containerEl)
+			.setName('Keep at most X consecutive empty lines')
+			.setDesc('Maximum number of consecutive empty lines to preserve (0-10). 0 = remove all empty lines, 1 = keep at most 1 empty line between content, etc.')
+			.addSlider(slider => slider
+				.setLimits(0, 10, 1)
+				.setValue(this.plugin.settings.maxConsecutiveEmptyLines)
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					this.plugin.settings.maxConsecutiveEmptyLines = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -352,6 +481,10 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				.setPlaceholder('_YYYY-MM-DD HHmmss')
 				.setValue(this.plugin.settings.backupFileNameFormat)
 				.onChange(async (value) => {
+					if (value.trim() === '') {
+						new Notice('Backup file name format cannot be empty');
+						return;
+					}
 					this.plugin.settings.backupFileNameFormat = value;
 					await this.plugin.saveSettings();
 					// Update the description with new example
@@ -374,9 +507,13 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		containerEl.createEl('p', { text: 'The plugin processes content in this order:' });
 		const orderList = containerEl.createEl('ol');
 		orderList.createEl('li', { text: 'Range Removal (removes content between start/end markers)' });
+		orderList.createEl('li', { text: 'Comment Cleaning (removes %% comments %% from marked lines)' });
 		orderList.createEl('li', { text: 'Link Cleaning (converts links to backticked text)' });
 		orderList.createEl('li', { text: 'Single Line Removal (removes entire lines with markers)' });
+		orderList.createEl('li', { text: 'Empty Line Limiting (reduces consecutive empty lines)' });
 		orderList.createEl('li', { text: 'Backup Creation (if enabled) and file save' });
+		const noticeBackupReason = orderList.createEl('ul');
+		noticeBackupReason.createEl('li', { text: 'Notice: backup created from source data but as a last step to avoid creating unnecessary files if no cleaning is done' });
 
 		containerEl.createEl('h3', { text: 'Examples' });
 		
@@ -387,6 +524,14 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		rangeExample.createEl('pre', { text: 'some text %% remove from here %%\nline to remove\nanother line to remove\n%% remove till here %% remaining text' });
 		rangeExample.createEl('p', { text: 'Result:' });
 		rangeExample.createEl('pre', { text: 'some text remaining text' });
+
+		// Comment Cleaning Example
+		const commentExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
+		commentExample.createEl('h4', { text: 'Comment Cleaning' });
+		commentExample.createEl('p', { text: 'Input:' });
+		commentExample.createEl('pre', { text: 'This text %% this comment stays %% has comments %% remove this comment %%\nAnother line %% inline comment %% with %% another comment remove this comment %% text' });
+		commentExample.createEl('p', { text: 'Result:' });
+		commentExample.createEl('pre', { text: 'This text %% this comment stays %% has comments\nAnother line %% inline comment %% with text' });
 
 		// Link Cleaning Example
 		const linkExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
@@ -400,16 +545,24 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		const singleExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
 		singleExample.createEl('h4', { text: 'Single Line Removal' });
 		singleExample.createEl('p', { text: 'Input:' });
-		singleExample.createEl('pre', { text: 'This line stays\n%% remove me %% This entire line is removed\nThis line also stays' });
+		singleExample.createEl('pre', { text: 'This line stays\n%% remove line %% This entire line is removed\nThis line also stays' });
 		singleExample.createEl('p', { text: 'Result:' });
 		singleExample.createEl('pre', { text: 'This line stays\nThis line also stays' });
+
+		// Empty Line Limiting Example
+		const emptyLineExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
+		emptyLineExample.createEl('h4', { text: 'Empty Line Limiting' });
+		emptyLineExample.createEl('p', { text: 'Input (with setting "Keep at most 1 consecutive empty line"):' });
+		emptyLineExample.createEl('pre', { text: 'First paragraph\n\n\n\n\nSecond paragraph\n\n\nThird paragraph' });
+		emptyLineExample.createEl('p', { text: 'Result:' });
+		emptyLineExample.createEl('pre', { text: 'First paragraph\n\nSecond paragraph\n\nThird paragraph' });
 
 		// Combined Example
 		const combinedExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
 		combinedExample.createEl('h4', { text: 'Combined Processing' });
 		combinedExample.createEl('p', { text: 'Input:' });
-		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] %% clean me %%\nSome text %% remove from here %%\nDelete this content\n%% remove till here %% keep this\n%% remove me %% This line gets deleted\nFinal line with [Google](https://google.com) %% clean me %%' });
+		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] %% clean me %%\nSome text %% remove from here %%\nDelete this content\n%% remove till here %% keep this\nText with %% comment %% and %% comment remove this comment %% more text\n%% remove line %% This line gets deleted\nFinal line with [Google](https://google.com) %% clean me %%' });
 		combinedExample.createEl('p', { text: 'Result:' });
-		combinedExample.createEl('pre', { text: 'Keep this `Note`\nSome text keep this\nFinal line with `Google`' });
+		combinedExample.createEl('pre', { text: 'Keep this `Note`\nSome text keep this\nText with %% comment %% and more text\nFinal line with `Google`' });
 	}
 }

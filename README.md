@@ -20,8 +20,10 @@ A powerful Obsidian plugin that removes lines and ranges of content from your fi
 ## Features
 
 - **Range-Based Removal**: Remove content between start and end markers while preserving partial line content
+- **Comment Cleaning**: Remove %% comments %% from lines containing specific markers
 - **Link Cleaning**: Convert Markdown links to backticked text while preserving other formatting
 - **Single Line Removal**: Remove entire lines containing specific markers
+- **Empty Line Limiting**: Control maximum consecutive empty lines between content
 - **Multiple Access Methods**: Ribbon button, context menus, and command palette
 - **Configurable Markers**: Customize all removal strings in settings
 - **Automatic Backups**: Optional backup creation with timestamp (`filename_HHmmss.ext`)
@@ -42,11 +44,17 @@ Access plugin settings via Settings → Community Plugins → Line Cleaner:
 - **Range Start Marker**: Text marking the beginning of content to remove (default: `%% remove from here %%`)
 - **Range End Marker**: Text marking the end of content to remove (default: `%% remove till here %%`)
 
+**Comment Cleaning:**
+- **Comment Cleaning Marker**: Only comments containing this marker will be removed (marker must be inside the comment) (default: `remove this comment`)
+
 **Link Cleaning:**
 - **Link Cleaning Marker**: Lines containing this string will have their links converted to backticked text (default: `%% clean me %%`)
 
 **Single Line Removal:**
-- **Single Line Removal Marker**: Lines containing this exact string will be completely removed (default: `%% remove me %%`)
+- **Single Line Removal Marker**: Lines containing this exact string will be completely removed (default: `%% remove line %%`)
+
+**Empty Line Limiting:**
+- **Keep at most X consecutive empty lines**: Control maximum consecutive empty lines (0-10). 0 = remove all empty lines, 1 = keep at most 1 empty line between content, etc. (default: 1)
 
 **Backup Options:**
 - **Create Backup**: Toggle automatic backup creation before modifications
@@ -65,25 +73,56 @@ another line to remove
 some text remaining text
 ```
 
+**Comment Cleaning:**
+```
+This text %% this comment stays %% has comments %% remove this comment %%
+Another line %% inline comment %% with %% another comment remove this comment %% text
+```
+**Result:**
+```
+This text %% this comment stays %% has comments
+Another line %% inline comment %% with text
+```
+
 **Link Cleaning:**
 ```
 Check [[My Note]] and [Google](https://google.com) %% clean me %%
 ```
 **Result:**
 ```
-Check `My Note` and `Google` %% clean me %%
+Check `My Note` and `Google`
 ```
 
 **Single Line Removal:**
 ```
 This line stays
-%% remove me %% This entire line is removed
+%% remove line %% This entire line is removed
 This line also stays
 ```
 **Result:**
 ```
 This line stays
 This line also stays
+```
+
+**Empty Line Limiting:**
+```
+First paragraph
+
+
+
+Second paragraph
+
+
+Third paragraph
+```
+**Result (with "Keep at most 1 consecutive empty line"):**
+```
+First paragraph
+
+Second paragraph
+
+Third paragraph
 ```
 
 ## Installation

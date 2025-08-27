@@ -8,29 +8,21 @@
     color: var(--text-normal);
 }
 
-/* Tabbed Settings Interface - Spaced Repetition Style */
 .line-cleaner-tabs {
     display: flex;
-    margin-bottom: 1.5em;
-    gap: 4px;
-    background: var(--background-secondary);
-    padding: 4px;
-    border-radius: var(--radius-m);
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .line-cleaner-tab {
-    background: transparent;
+    background: none;
     border: none;
-    padding: 8px 16px;
+    padding: 10px 20px;
     cursor: pointer;
     color: var(--text-muted);
-    font-size: var(--font-ui-small);
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
     font-weight: 500;
-    border-radius: var(--radius-s);
-    transition: all 0.15s ease;
-    position: relative;
-    flex: 1;
-    text-align: center;
 }
 
 .line-cleaner-tab:hover {
@@ -39,106 +31,33 @@
 }
 
 .line-cleaner-tab.active {
-    color: var(--text-on-accent);
-    background-color: var(--interactive-accent);
-    box-shadow: var(--shadow-s);
+    color: var(--text-accent);
+    border-bottom-color: var(--text-accent);
 }
 
 .line-cleaner-tab-content {
-    animation: fadeIn 0.2s ease-in;
+    padding: 0;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Example sections styling */
 .line-cleaner-example {
-    margin-bottom: 2em;
-    padding: 1em;
+    margin: 20px 0;
+    padding: 15px;
     background-color: var(--background-secondary);
-    border-radius: var(--radius-s);
-    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    border-left: 4px solid var(--text-accent);
 }
 
 .line-cleaner-example h4 {
     margin-top: 0;
-    margin-bottom: 0.75em;
     color: var(--text-accent);
-    font-size: var(--font-ui-medium);
-}
-
-.line-cleaner-example p {
-    margin: 0.5em 0;
-    font-weight: 500;
-    color: var(--text-normal);
 }
 
 .line-cleaner-example pre {
-    background-color: var(--background-primary-alt);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--radius-s);
-    padding: 0.75em;
-    margin: 0.5em 0 1em 0;
+    background-color: var(--background-primary);
+    padding: 10px;
+    border-radius: 4px;
     font-family: var(--font-monospace);
-    font-size: var(--font-text-size);
-    line-height: 1.4;
-    color: var(--text-normal);
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
-/* Settings sections styling */
-.line-cleaner-tab-content h3 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
-    color: var(--text-normal);
-    border-bottom: 1px solid var(--background-modifier-border);
-    padding-bottom: 0.25em;
-}
-
-.line-cleaner-tab-content h3:first-child {
-    margin-top: 0;
-}
-
-/* Remove any horizontal lines from h3 children */
-.line-cleaner-tab-content h3 * {
-    border-bottom: none !important;
-    border-top: none !important;
-}
-
-.line-cleaner-tab-content ul,
-.line-cleaner-tab-content ol {
-    margin-left: 1.5em;
-    margin-bottom: 1em;
-}
-
-.line-cleaner-tab-content li {
-    margin-bottom: 0.4em;
-    line-height: 1.4;
-}
-
-.line-cleaner-tab-content p {
-    margin-bottom: 1em;
-    line-height: 1.5;
-    color: var(--text-muted);
-}
-
-/* Responsive design for smaller screens */
-@media (max-width: 768px) {
-    .line-cleaner-tabs {
-        flex-direction: column;
-    }
-    
-    .line-cleaner-tab {
-        text-align: left;
-        border-bottom: 1px solid var(--background-modifier-border);
-        border-right: none;
-    }
-    
-    .line-cleaner-tab.active {
-        border-bottom-color: var(--background-modifier-border);
-        border-left: 3px solid var(--interactive-accent);
-    }
+    font-size: 13px;
+    overflow-x: auto;
+    margin: 8px 0;
 }
