@@ -110,6 +110,11 @@ export default class LineCleanerPlugin extends Plugin {
 			processedContent = singleResult.content;
 			totalRemovals += singleResult.removals;
 
+			// Then, process empty list item removal
+			const emptyListResult = this.processEmptyListItemRemoval(processedContent);
+			processedContent = emptyListResult.content;
+			totalRemovals += emptyListResult.removals;
+
 			// Finally, process empty line limiting
 			const emptyLineResult = this.processEmptyLineLimiting(processedContent);
 			processedContent = emptyLineResult.content;
@@ -276,6 +281,31 @@ export default class LineCleanerPlugin extends Plugin {
 				}
 			} else {
 				consecutiveEmptyCount = 0;
+				processedLines.push(line);
+			}
+		}
+
+		return { content: processedLines.join('\n'), removals };
+	}
+
+	processEmptyListItemRemoval(content: string): { content: string, removals: number } {
+		if (!this.settings.removeEmptyListItems) {
+			return { content, removals: 0 };
+		}
+
+		const lines = content.split('\n');
+		const processedLines: string[] = [];
+		let removals = 0;
+
+		for (const line of lines) {
+			const trimmedLine = line.trim();
+			
+			// Check if line contains only empty list item patterns
+			const isEmptyListItem = /^-\s*(\[.*\])?$/.test(trimmedLine);
+			
+			if (isEmptyListItem) {
+				removals++;
+			} else {
 				processedLines.push(line);
 			}
 		}
@@ -455,6 +485,16 @@ class LineCleanerSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
+		new Setting(containerEl)
+			.setName('Remove empty list items')
+			.setDesc('Remove lines containing only empty list items like "- ", "- [ ]", "- [x]", etc.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.removeEmptyListItems)
+				.onChange(async (value) => {
+					this.plugin.settings.removeEmptyListItems = value;
+					await this.plugin.saveSettings();
+				}));
+
 		containerEl.createEl('h3', { text: 'Backup Options' });
 
 		new Setting(containerEl)
@@ -510,6 +550,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		orderList.createEl('li', { text: 'Comment Cleaning (removes %% comments %% from marked lines)' });
 		orderList.createEl('li', { text: 'Link Cleaning (converts links to backticked text)' });
 		orderList.createEl('li', { text: 'Single Line Removal (removes entire lines with markers)' });
+		orderList.createEl('li', { text: 'Empty List Item Removal (removes empty list items)' });
 		orderList.createEl('li', { text: 'Empty Line Limiting (reduces consecutive empty lines)' });
 		orderList.createEl('li', { text: 'Backup Creation (if enabled) and file save' });
 		const noticeBackupReason = orderList.createEl('ul');
@@ -556,6 +597,14 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		emptyLineExample.createEl('pre', { text: 'First paragraph\n\n\n\n\nSecond paragraph\n\n\nThird paragraph' });
 		emptyLineExample.createEl('p', { text: 'Result:' });
 		emptyLineExample.createEl('pre', { text: 'First paragraph\n\nSecond paragraph\n\nThird paragraph' });
+
+		// Empty List Item Removal Example
+		const emptyListExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
+		emptyListExample.createEl('h4', { text: 'Empty List Item Removal' });
+		emptyListExample.createEl('p', { text: 'Input (with "Remove empty list items" enabled):' });
+		emptyListExample.createEl('pre', { text: 'Task list:\n- First task\n- \n- [ ]\n- [x]\n- Second task\n- [ ] Third task' });
+		emptyListExample.createEl('p', { text: 'Result:' });
+		emptyListExample.createEl('pre', { text: 'Task list:\n- First task\n- Second task\n- [ ] Third task' });
 
 		// Combined Example
 		const combinedExample = containerEl.createDiv({ cls: 'line-cleaner-example' });

@@ -24,6 +24,7 @@ A powerful Obsidian plugin that removes lines and ranges of content from your fi
 - **Link Cleaning**: Convert Markdown links to backticked text while preserving other formatting
 - **Single Line Removal**: Remove entire lines containing specific markers
 - **Empty Line Limiting**: Control maximum consecutive empty lines between content
+- **Empty List Item Removal**: Remove empty list items like "- ", "- [ ]", "- [x]"
 - **Multiple Access Methods**: Ribbon button, context menus, and command palette
 - **Configurable Markers**: Customize all removal strings in settings
 - **Automatic Backups**: Optional backup creation with timestamp (`filename_HHmmss.ext`)
@@ -55,6 +56,9 @@ Access plugin settings via Settings → Community Plugins → Line Cleaner:
 
 **Empty Line Limiting:**
 - **Keep at most X consecutive empty lines**: Control maximum consecutive empty lines (0-10). 0 = remove all empty lines, 1 = keep at most 1 empty line between content, etc. (default: 1)
+
+**Empty List Item Removal:**
+- **Remove empty list items**: Remove lines containing only empty list items like "- ", "- [ ]", "- [x]", etc. (default: false)
 
 **Backup Options:**
 - **Create Backup**: Toggle automatic backup creation before modifications
@@ -123,6 +127,24 @@ First paragraph
 Second paragraph
 
 Third paragraph
+```
+
+**Empty List Item Removal:**
+```
+Task list:
+- First task
+- 
+- [ ]
+- [x]
+- Second task
+- [ ] Third task
+```
+**Result (with "Remove empty list items" enabled):**
+```
+Task list:
+- First task
+- Second task
+- [ ] Third task
 ```
 
 ## Installation

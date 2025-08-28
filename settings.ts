@@ -7,6 +7,7 @@ export interface LineCleanerSettings {
 	createBackup: boolean;
 	backupFileNameFormat: string;
 	maxConsecutiveEmptyLines: number;
+	removeEmptyListItems: boolean;
 }
 
 export const DEFAULT_SETTINGS: LineCleanerSettings = {
@@ -17,5 +18,6 @@ export const DEFAULT_SETTINGS: LineCleanerSettings = {
 	commentCleanerString: "remove this comment",
 	createBackup: true,
 	backupFileNameFormat: "_YYYY-MM-DD HHmmss",
-	maxConsecutiveEmptyLines: 1
+	maxConsecutiveEmptyLines: 1,
+	removeEmptyListItems: false
 };
