@@ -25,26 +25,36 @@ export default class LineCleanerPlugin extends Plugin {
 		// Add context menu
 		this.registerEvent(
 			this.app.workspace.on('file-menu', (menu: Menu, file: TFile) => {
-				menu.addItem((item) => {
-					item
-						.setTitle('Clean lines')
-						.setIcon('trash-2')
-						.onClick(async () => {
-							await this.cleanFile(file);
-						});
-				});
+				// Only show context menu for files, not directories
+				if (file instanceof TFile && file.extension === 'md') {
+					menu.addItem((item) => {
+						item
+							.setTitle('Clean lines')
+							.setIcon('trash-2')
+							.onClick(async () => {
+								await this.cleanFile(file);
+							});
+					});
+				}
 			})
 		);
 
 		// Add editor context menu
 		this.registerEvent(
 			this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
+				const hasSelection = editor.somethingSelected();
+				const menuTitle = hasSelection ? 'Clean lines in selection' : 'Clean lines in whole file';
+				
 				menu.addItem((item) => {
 					item
-						.setTitle('Clean lines')
+						.setTitle(menuTitle)
 						.setIcon('trash-2')
 						.onClick(async () => {
-							await this.cleanCurrentFile();
+							if (hasSelection) {
+								await this.cleanSelection(editor);
+							} else {
+								await this.cleanCurrentFile();
+							}
 						});
 				});
 			})
@@ -84,44 +94,71 @@ export default class LineCleanerPlugin extends Plugin {
         await this.cleanFile(activeFile);
 	}
 
+	processContent(content: string): { content: string, removals: number } {
+		let processedContent = content;
+		let totalRemovals = 0;
+
+		// Apply the complete processing pipeline
+		const rangeResult = this.processRangeRemovals(processedContent);
+		processedContent = rangeResult.content;
+		totalRemovals += rangeResult.removals;
+
+		const commentResult = this.processCommentCleaning(processedContent);
+		processedContent = commentResult.content;
+		totalRemovals += commentResult.removals;
+
+		const linkResult = this.processLinkCleaning(processedContent);
+		processedContent = linkResult.content;
+		totalRemovals += linkResult.removals;
+
+		const singleResult = this.processSingleLineRemovals(processedContent);
+		processedContent = singleResult.content;
+		totalRemovals += singleResult.removals;
+
+		const emptyListResult = this.processEmptyListItemRemoval(processedContent);
+		processedContent = emptyListResult.content;
+		totalRemovals += emptyListResult.removals;
+
+		const emptyLineResult = this.processEmptyLineLimiting(processedContent);
+		processedContent = emptyLineResult.content;
+		totalRemovals += emptyLineResult.removals;
+
+		return { content: processedContent, removals: totalRemovals };
+	}
+
+	async cleanSelection(editor: Editor) {
+		try {
+			const selection = editor.getSelection();
+			if (!selection) {
+				new Notice('No text selected');
+				return;
+			}
+
+			const result = this.processContent(selection);
+
+			// Check if any changes were made
+			if (result.content === selection) {
+				new Notice('No lines found containing removal markers in selection');
+				return;
+			}
+
+			// Replace the selection with the processed content
+			editor.replaceSelection(result.content);
+
+			new Notice(`Processed ${result.removals} removal operation(s) in selection`);
+		} catch (error) {
+			console.error('Error cleaning selection:', error);
+			new Notice('Error cleaning selection: ' + error.message);
+		}
+	}
+
 	async cleanFile(file: TFile) {
 		try {
 			const content = await this.app.vault.read(file);
-			let processedContent = content;
-			let totalRemovals = 0;
-
-			// First, process range-based removals
-			const rangeResult = this.processRangeRemovals(processedContent);
-			processedContent = rangeResult.content;
-			totalRemovals += rangeResult.removals;
-
-			// Then, process comment cleaning
-			const commentResult = this.processCommentCleaning(processedContent);
-			processedContent = commentResult.content;
-			totalRemovals += commentResult.removals;
-
-			// Then, process link cleaning
-			const linkResult = this.processLinkCleaning(processedContent);
-			processedContent = linkResult.content;
-			totalRemovals += linkResult.removals;
-
-			// Then, process single-line removals
-			const singleResult = this.processSingleLineRemovals(processedContent);
-			processedContent = singleResult.content;
-			totalRemovals += singleResult.removals;
-
-			// Then, process empty list item removal
-			const emptyListResult = this.processEmptyListItemRemoval(processedContent);
-			processedContent = emptyListResult.content;
-			totalRemovals += emptyListResult.removals;
-
-			// Finally, process empty line limiting
-			const emptyLineResult = this.processEmptyLineLimiting(processedContent);
-			processedContent = emptyLineResult.content;
-			totalRemovals += emptyLineResult.removals;
+			const result = this.processContent(content);
 
 			// Check if any changes were made
-			if (processedContent === content) {
+			if (result.content === content) {
 				new Notice('No lines found containing removal markers');
 				return;
 			}
@@ -132,9 +169,9 @@ export default class LineCleanerPlugin extends Plugin {
 			}
 
 			// Write cleaned content back to file
-			await this.app.vault.modify(file, processedContent);
+			await this.app.vault.modify(file, result.content);
 
-			new Notice(`Processed ${totalRemovals} removal operation(s) in ${file.name}`);
+			new Notice(`Processed ${result.removals} removal operation(s) in ${file.name}`);
 		} catch (error) {
 			console.error('Error cleaning file:', error);
 			new Notice('Error cleaning file: ' + error.message);
