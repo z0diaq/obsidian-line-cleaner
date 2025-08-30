@@ -30,7 +30,7 @@ export default class LineCleanerPlugin extends Plugin {
 					menu.addItem((item) => {
 						item
 							.setTitle('Clean lines')
-							.setIcon('trash-2')
+							.setIcon('eraser')
 							.onClick(async () => {
 								await this.cleanFile(file);
 							});
@@ -48,7 +48,7 @@ export default class LineCleanerPlugin extends Plugin {
 				menu.addItem((item) => {
 					item
 						.setTitle(menuTitle)
-						.setIcon('trash-2')
+						.setIcon('eraser')
 						.onClick(async () => {
 							if (hasSelection) {
 								await this.cleanSelection(editor);
