@@ -8,6 +8,12 @@ export interface LineCleanerSettings {
 	backupFileNameFormat: string;
 	maxConsecutiveEmptyLines: number;
 	removeEmptyListItems: boolean;
+	// Feature toggles
+	enableRangeRemoval: boolean;
+	enableCommentCleaning: boolean;
+	enableLinkCleaning: boolean;
+	enableSingleLineRemoval: boolean;
+	enableEmptyLineLimiting: boolean;
 }
 
 export const DEFAULT_SETTINGS: LineCleanerSettings = {
@@ -19,5 +25,11 @@ export const DEFAULT_SETTINGS: LineCleanerSettings = {
 	createBackup: true,
 	backupFileNameFormat: "_YYYY-MM-DD HHmmss",
 	maxConsecutiveEmptyLines: 1,
-	removeEmptyListItems: false
+	removeEmptyListItems: false,
+	// Feature toggles - all enabled by default
+	enableRangeRemoval: true,
+	enableCommentCleaning: true,
+	enableLinkCleaning: true,
+	enableSingleLineRemoval: true,
+	enableEmptyLineLimiting: true
 };

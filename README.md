@@ -41,6 +41,14 @@ A powerful Obsidian plugin that removes lines and ranges of content from your fi
 ### Settings
 Access plugin settings via Settings → Community Plugins → Line Cleaner:
 
+**Feature Selection:**
+Choose which cleaning features to enable. All features are enabled by default:
+- **Enable Range Removal**: Remove content between start and end markers
+- **Enable Comment Cleaning**: Remove specific %% comments %% containing markers  
+- **Enable Link Cleaning**: Convert links to plain text in backticks
+- **Enable Single Line Removal**: Remove entire lines containing markers
+- **Enable Empty Line Limiting**: Control consecutive empty lines between content
+
 **Range Removal:**
 - **Range Start Marker**: Text marking the beginning of content to remove (default: `%% remove from here %%`)
 - **Range End Marker**: Text marking the end of content to remove (default: `%% remove till here %%`)
@@ -57,7 +65,7 @@ Access plugin settings via Settings → Community Plugins → Line Cleaner:
 **Empty Line Limiting:**
 - **Keep at most X consecutive empty lines**: Control maximum consecutive empty lines (0-10). 0 = remove all empty lines, 1 = keep at most 1 empty line between content, etc. (default: 1)
 
-**Empty List Item Removal:**
+**List Item Cleaning:**
 - **Remove empty list items**: Remove lines containing only empty list items like "- ", "- [ ]", "- [x]", etc. (default: false)
 
 **Backup Options:**

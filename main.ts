@@ -98,30 +98,42 @@ export default class LineCleanerPlugin extends Plugin {
 		let processedContent = content;
 		let totalRemovals = 0;
 
-		// Apply the complete processing pipeline
-		const rangeResult = this.processRangeRemovals(processedContent);
-		processedContent = rangeResult.content;
-		totalRemovals += rangeResult.removals;
+		// Apply the complete processing pipeline based on enabled features
+		if (this.settings.enableRangeRemoval) {
+			const rangeResult = this.processRangeRemovals(processedContent);
+			processedContent = rangeResult.content;
+			totalRemovals += rangeResult.removals;
+		}
 
-		const commentResult = this.processCommentCleaning(processedContent);
-		processedContent = commentResult.content;
-		totalRemovals += commentResult.removals;
+		if (this.settings.enableCommentCleaning) {
+			const commentResult = this.processCommentCleaning(processedContent);
+			processedContent = commentResult.content;
+			totalRemovals += commentResult.removals;
+		}
 
-		const linkResult = this.processLinkCleaning(processedContent);
-		processedContent = linkResult.content;
-		totalRemovals += linkResult.removals;
+		if (this.settings.enableLinkCleaning) {
+			const linkResult = this.processLinkCleaning(processedContent);
+			processedContent = linkResult.content;
+			totalRemovals += linkResult.removals;
+		}
 
-		const singleResult = this.processSingleLineRemovals(processedContent);
-		processedContent = singleResult.content;
-		totalRemovals += singleResult.removals;
+		if (this.settings.enableSingleLineRemoval) {
+			const singleResult = this.processSingleLineRemovals(processedContent);
+			processedContent = singleResult.content;
+			totalRemovals += singleResult.removals;
+		}
 
-		const emptyListResult = this.processEmptyListItemRemoval(processedContent);
-		processedContent = emptyListResult.content;
-		totalRemovals += emptyListResult.removals;
+		if (this.settings.removeEmptyListItems) {
+			const emptyListResult = this.processEmptyListItemRemoval(processedContent);
+			processedContent = emptyListResult.content;
+			totalRemovals += emptyListResult.removals;
+		}
 
-		const emptyLineResult = this.processEmptyLineLimiting(processedContent);
-		processedContent = emptyLineResult.content;
-		totalRemovals += emptyLineResult.removals;
+		if (this.settings.enableEmptyLineLimiting) {
+			const emptyLineResult = this.processEmptyLineLimiting(processedContent);
+			processedContent = emptyLineResult.content;
+			totalRemovals += emptyLineResult.removals;
+		}
 
 		return { content: processedContent, removals: totalRemovals };
 	}
@@ -326,10 +338,6 @@ export default class LineCleanerPlugin extends Plugin {
 	}
 
 	processEmptyListItemRemoval(content: string): { content: string, removals: number } {
-		if (!this.settings.removeEmptyListItems) {
-			return { content, removals: 0 };
-		}
-
 		const lines = content.split('\n');
 		const processedLines: string[] = [];
 		let removals = 0;
@@ -420,6 +428,60 @@ class LineCleanerSettingTab extends PluginSettingTab {
 	}
 
 	private displaySettingsTab(containerEl: HTMLElement): void {
+		// Feature Selection Section
+		containerEl.createEl('h3', { text: 'Feature Selection' });
+		containerEl.createEl('p', { text: 'Choose which cleaning features to enable. All features are enabled by default.' });
+
+		new Setting(containerEl)
+			.setName('Enable Range Removal')
+			.setDesc('Remove content between start and end markers')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableRangeRemoval)
+				.onChange(async (value) => {
+					this.plugin.settings.enableRangeRemoval = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Enable Comment Cleaning')
+			.setDesc('Remove specific %% comments %% containing markers')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableCommentCleaning)
+				.onChange(async (value) => {
+					this.plugin.settings.enableCommentCleaning = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Enable Link Cleaning')
+			.setDesc('Convert links to plain text in backticks')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableLinkCleaning)
+				.onChange(async (value) => {
+					this.plugin.settings.enableLinkCleaning = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Enable Single Line Removal')
+			.setDesc('Remove entire lines containing markers')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableSingleLineRemoval)
+				.onChange(async (value) => {
+					this.plugin.settings.enableSingleLineRemoval = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Enable Empty Line Limiting')
+			.setDesc('Control consecutive empty lines between content')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableEmptyLineLimiting)
+				.onChange(async (value) => {
+					this.plugin.settings.enableEmptyLineLimiting = value;
+					await this.plugin.saveSettings();
+				}));
+
 		containerEl.createEl('h3', { text: 'Range Removal' });
 		containerEl.createEl('p', { text: 'Remove content between start and end markers, preserving partial line content.' });
 
@@ -521,6 +583,9 @@ class LineCleanerSettingTab extends PluginSettingTab {
 					this.plugin.settings.maxConsecutiveEmptyLines = value;
 					await this.plugin.saveSettings();
 				}));
+
+		containerEl.createEl('h3', { text: 'List Item Cleaning' });
+		containerEl.createEl('p', { text: 'Remove empty list items from your content.' });
 
 		new Setting(containerEl)
 			.setName('Remove empty list items')
