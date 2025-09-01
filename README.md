@@ -1,6 +1,6 @@
-# Line Cleaner - Obsidian Plugin
+# Lines Cleaner - Obsidian Plugin
 
-A powerful Obsidian plugin that removes lines and ranges of content from your files with configurable backup options.
+A powerful Obsidian plugin that removes or cleans lines containing specific markers in file or selection with configurable backup options.
 
 ## Usecases
 
@@ -39,7 +39,7 @@ A powerful Obsidian plugin that removes lines and ranges of content from your fi
 4. **Command Palette**: Search for "Clean lines from current file"
 
 ### Settings
-Access plugin settings via Settings → Community Plugins → Line Cleaner:
+Access plugin settings via Settings → Community Plugins → Lines Cleaner:
 
 **Feature Selection:**
 Choose which cleaning features to enable. All features are enabled by default:
@@ -160,7 +160,7 @@ Task list:
 ### From Obsidian Community Plugins (Recommended)
 1. Open Obsidian Settings
 2. Go to Community Plugins
-3. Search for "Line Cleaner"
+3. Search for "Lines Cleaner"
 4. Install and enable the plugin
 
 ### Manual Installation

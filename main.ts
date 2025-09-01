@@ -87,7 +87,7 @@ export default class LineCleanerPlugin extends Plugin {
         }
         
         if (activeFile.extension !== 'md') {
-            new Notice('Line Cleaner only works with Markdown files');
+            new Notice('Lines Cleaner only works with Markdown files');
             return;
         }
         
@@ -390,7 +390,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		// Create header
-		containerEl.createEl('h2', { text: 'Line Cleaner' });
+		containerEl.createEl('h2', { text: 'Lines Cleaner' });
 
 		// Create tab navigation
 		const tabContainer = containerEl.createDiv({ cls: 'line-cleaner-tabs' });
@@ -430,7 +430,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 	private displaySettingsTab(containerEl: HTMLElement): void {
 		// Feature Selection Section
 		containerEl.createEl('h3', { text: 'Feature Selection' });
-		containerEl.createEl('p', { text: 'Choose which cleaning features to enable. All features are enabled by default.' });
+		containerEl.createEl('p', { text: 'Which features do you need?' });
 
 		new Setting(containerEl)
 			.setName('Enable Range Removal')
@@ -481,6 +481,27 @@ class LineCleanerSettingTab extends PluginSettingTab {
 					this.plugin.settings.enableEmptyLineLimiting = value;
 					await this.plugin.saveSettings();
 				}));
+
+		new Setting(containerEl)
+			.setName('Remove empty list items')
+			.setDesc('Remove lines containing only empty list items like "- ", "- [ ]", "- [x]", etc.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.removeEmptyListItems)
+				.onChange(async (value) => {
+					this.plugin.settings.removeEmptyListItems = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Create backup')
+			.setDesc('Create a backup file before making changes.\nBackup filename format is defined below.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.createBackup)
+				.onChange(async (value) => {
+					this.plugin.settings.createBackup = value;
+					await this.plugin.saveSettings();
+				}));
+	
 
 		containerEl.createEl('h3', { text: 'Range Removal' });
 		containerEl.createEl('p', { text: 'Remove content between start and end markers, preserving partial line content.' });
@@ -584,30 +605,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		containerEl.createEl('h3', { text: 'List Item Cleaning' });
-		containerEl.createEl('p', { text: 'Remove empty list items from your content.' });
-
-		new Setting(containerEl)
-			.setName('Remove empty list items')
-			.setDesc('Remove lines containing only empty list items like "- ", "- [ ]", "- [x]", etc.')
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.removeEmptyListItems)
-				.onChange(async (value) => {
-					this.plugin.settings.removeEmptyListItems = value;
-					await this.plugin.saveSettings();
-				}));
-
 		containerEl.createEl('h3', { text: 'Backup Options' });
-
-		new Setting(containerEl)
-			.setName('Create backup')
-			.setDesc('Create a backup file before making changes')
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.createBackup)
-				.onChange(async (value) => {
-					this.plugin.settings.createBackup = value;
-					await this.plugin.saveSettings();
-				}));
 
 		// Helper function to generate example filename
 		const generateExampleFilename = (format: string): string => {
