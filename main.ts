@@ -129,6 +129,12 @@ export default class LineCleanerPlugin extends Plugin {
 			totalRemovals += emptyListResult.removals;
 		}
 
+		if (this.settings.removeFinishedTasks) {
+			const finishedTasksResult = this.processFinishedTasksRemoval(processedContent);
+			processedContent = finishedTasksResult.content;
+			totalRemovals += finishedTasksResult.removals;
+		}
+
 		if (this.settings.enableEmptyLineLimiting) {
 			const emptyLineResult = this.processEmptyLineLimiting(processedContent);
 			processedContent = emptyLineResult.content;
@@ -358,6 +364,27 @@ export default class LineCleanerPlugin extends Plugin {
 		return { content: processedLines.join('\n'), removals };
 	}
 
+	processFinishedTasksRemoval(content: string): { content: string, removals: number } {
+		const lines = content.split('\n');
+		const processedLines: string[] = [];
+		let removals = 0;
+
+		for (const line of lines) {
+			const trimmedLine = line.trim();
+			
+			// Check if line contains a finished task (- [x] or - [X])
+			const isFinishedTask = /^-\s*\[x\]/i.test(trimmedLine);
+			
+			if (isFinishedTask) {
+				removals++;
+			} else {
+				processedLines.push(line);
+			}
+		}
+
+		return { content: processedLines.join('\n'), removals };
+	}
+
 	async createBackup(file: TFile, content: string) {
 		try {
 			const processedFormat = moment().format(this.settings.backupFileNameFormat);
@@ -489,6 +516,16 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.removeEmptyListItems)
 				.onChange(async (value) => {
 					this.plugin.settings.removeEmptyListItems = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Remove finished tasks')
+			.setDesc('Remove lines containing completed tasks like "- [x] Task completed" or "- [X] Another task"')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.removeFinishedTasks)
+				.onChange(async (value) => {
+					this.plugin.settings.removeFinishedTasks = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -651,6 +688,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		orderList.createEl('li', { text: 'Link Cleaning (converts links to backticked text)' });
 		orderList.createEl('li', { text: 'Single Line Removal (removes entire lines with markers)' });
 		orderList.createEl('li', { text: 'Empty List Item Removal (removes empty list items)' });
+		orderList.createEl('li', { text: 'Finished Tasks Removal (removes completed tasks)' });
 		orderList.createEl('li', { text: 'Empty Line Limiting (reduces consecutive empty lines)' });
 		orderList.createEl('li', { text: 'Backup Creation (if enabled) and file save' });
 		const noticeBackupReason = orderList.createEl('ul');
@@ -705,6 +743,14 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		emptyListExample.createEl('pre', { text: 'Task list:\n- First task\n- \n- [ ]\n- [x]\n- Second task\n- [ ] Third task' });
 		emptyListExample.createEl('p', { text: 'Result:' });
 		emptyListExample.createEl('pre', { text: 'Task list:\n- First task\n- Second task\n- [ ] Third task' });
+
+		// Finished Tasks Removal Example
+		const finishedTasksExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
+		finishedTasksExample.createEl('h4', { text: 'Finished Tasks Removal' });
+		finishedTasksExample.createEl('p', { text: 'Input (with "Remove finished tasks" enabled):' });
+		finishedTasksExample.createEl('pre', { text: 'My tasks:\n- [ ] Todo item\n- [x] Completed task\n- [X] Another completed task\n- [ ] Still pending\n- [x] Done with this one' });
+		finishedTasksExample.createEl('p', { text: 'Result:' });
+		finishedTasksExample.createEl('pre', { text: 'My tasks:\n- [ ] Todo item\n- [ ] Still pending' });
 
 		// Combined Example
 		const combinedExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
