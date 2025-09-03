@@ -72,7 +72,14 @@ export default class LineCleanerPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const loadedData = await this.loadData();
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
+		
+		// Migration: Convert old removalString to removalStrings array
+		if (loadedData && 'removalString' in loadedData && !('removalStrings' in loadedData)) {
+			this.settings.removalStrings = [loadedData.removalString as string];
+			await this.saveSettings();
+		}
 	}
 
 	async saveSettings() {
@@ -229,16 +236,23 @@ export default class LineCleanerPlugin extends Plugin {
 
 	processSingleLineRemovals(content: string): { content: string, removals: number } {
 		const lines = content.split('\n');
-		const removalString = this.settings.removalString;
+		let cleanedLines = [...lines];
+		let totalRemovals = 0;
 		
-		// Count lines to be removed
-		const linesToRemove = lines.filter(line => line.includes(removalString)).length;
+		// Process each removal string
+		for (const removalString of this.settings.removalStrings) {
+			if (!removalString.trim()) continue; // Skip empty strings
+			
+			// Count lines to be removed for this marker
+			const linesToRemove = cleanedLines.filter(line => line.includes(removalString)).length;
+			totalRemovals += linesToRemove;
+			
+			// Remove lines containing this removal string
+			cleanedLines = cleanedLines.filter(line => !line.includes(removalString));
+		}
 		
-		// Remove lines containing the removal string
-		const cleanedLines = lines.filter(line => !line.includes(removalString));
 		const cleanedContent = cleanedLines.join('\n');
-
-		return { content: cleanedContent, removals: linesToRemove };
+		return { content: cleanedContent, removals: totalRemovals };
 	}
 
 	processCommentCleaning(content: string): { content: string, removals: number } {
@@ -610,22 +624,33 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				}));
 
 		containerEl.createEl('h3', { text: 'Single Line Removal' });
-		containerEl.createEl('p', { text: 'Remove entire lines containing this marker (processed after comment and link cleaning).' });
+		containerEl.createEl('p', { text: 'Remove entire lines containing any of these markers (processed after comment and link cleaning).' });
 
 		new Setting(containerEl)
-			.setName('Single line removal marker')
-			.setDesc('Lines containing this exact string will be completely removed')
-			.addText(text => text
-				.setPlaceholder('%% remove line %%')
-				.setValue(this.plugin.settings.removalString)
-				.onChange(async (value) => {
-					if (value.trim() === '') {
-						new Notice('Single line removal marker cannot be empty');
-						return;
-					}
-					this.plugin.settings.removalString = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName('Single line removal markers')
+			.setDesc('Lines containing any of these strings will be completely removed. Enter one marker per line.')
+			.addTextArea(text => {
+				text.setPlaceholder('%% remove line %%\nrem-ln')
+					.setValue(this.plugin.settings.removalStrings.join('\n'))
+					.onChange(async (value) => {
+						const markers = value.split('\n')
+							.map(line => line.trim())
+							.filter(line => line.length > 0);
+						
+						if (markers.length === 0) {
+							new Notice('At least one removal marker is required');
+							return;
+						}
+						
+						this.plugin.settings.removalStrings = markers;
+						await this.plugin.saveSettings();
+					});
+				
+				// Set textarea height for 3 lines with scrollbar
+				text.inputEl.rows = 3;
+				text.inputEl.style.resize = 'vertical';
+				text.inputEl.style.minHeight = '60px';
+			});
 
 		containerEl.createEl('h3', { text: 'Empty Line Limiting' });
 		containerEl.createEl('p', { text: 'Control the maximum number of consecutive empty lines to keep between content lines.' });
@@ -723,10 +748,10 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		// Single Line Removal Example
 		const singleExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
 		singleExample.createEl('h4', { text: 'Single Line Removal' });
-		singleExample.createEl('p', { text: 'Input:' });
-		singleExample.createEl('pre', { text: 'This line stays\n%% remove line %% This entire line is removed\nThis line also stays' });
+		singleExample.createEl('p', { text: 'Input (with markers "%% remove line %%" and "rem-ln"):' });
+		singleExample.createEl('pre', { text: 'This line stays\n%% remove line %% This entire line is removed\nThis line also stays\nrem-ln Another line to remove\nFinal line stays' });
 		singleExample.createEl('p', { text: 'Result:' });
-		singleExample.createEl('pre', { text: 'This line stays\nThis line also stays' });
+		singleExample.createEl('pre', { text: 'This line stays\nThis line also stays\nFinal line stays' });
 
 		// Empty Line Limiting Example
 		const emptyLineExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
@@ -756,7 +781,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		const combinedExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
 		combinedExample.createEl('h4', { text: 'Combined Processing' });
 		combinedExample.createEl('p', { text: 'Input:' });
-		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] %% clean me %%\nSome text %% remove from here %%\nDelete this content\n%% remove till here %% keep this\nText with %% comment %% and %% comment remove this comment %% more text\n%% remove line %% This line gets deleted\nFinal line with [Google](https://google.com) %% clean me %%' });
+		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] %% clean me %%\nSome text %% remove from here %%\nDelete this content\n%% remove till here %% keep this\nText with %% comment %% and %% comment remove this comment %% more text\n%% remove line %% This line gets deleted\nrem-ln Another line to remove\nFinal line with [Google](https://google.com) %% clean me %%' });
 		combinedExample.createEl('p', { text: 'Result:' });
 		combinedExample.createEl('pre', { text: 'Keep this `Note`\nSome text keep this\nText with %% comment %% and more text\nFinal line with `Google`' });
 	}

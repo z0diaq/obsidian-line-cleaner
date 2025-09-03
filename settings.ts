@@ -1,5 +1,5 @@
 export interface LineCleanerSettings {
-	removalString: string;
+	removalStrings: string[];
 	rangeStartString: string;
 	rangeEndString: string;
 	cleanLinksString: string;
@@ -18,7 +18,7 @@ export interface LineCleanerSettings {
 }
 
 export const DEFAULT_SETTINGS: LineCleanerSettings = {
-	removalString: "%% remove line %%",
+	removalStrings: ["%% remove line %%", "rem-ln"],
 	rangeStartString: "%% remove from here %%",
 	rangeEndString: "%% remove till here %%",
 	cleanLinksString: "%% clean me %%",

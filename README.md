@@ -60,7 +60,7 @@ Choose which cleaning features to enable. All features are enabled by default:
 - **Link Cleaning Marker**: Lines containing this string will have their links converted to backticked text (default: `%% clean me %%`)
 
 **Single Line Removal:**
-- **Single Line Removal Marker**: Lines containing this exact string will be completely removed (default: `%% remove line %%`)
+- **Single Line Removal Markers**: Lines containing any of these strings will be completely removed. Enter one marker per line. (default: `%% remove line %%` and `rem-ln`)
 
 **Empty Line Limiting:**
 - **Keep at most X consecutive empty lines**: Control maximum consecutive empty lines (0-10). 0 = remove all empty lines, 1 = keep at most 1 empty line between content, etc. (default: 1)
@@ -110,11 +110,14 @@ Check `My Note` and `Google`
 This line stays
 %% remove line %% This entire line is removed
 This line also stays
+rem-ln Another line to remove
+Final line stays
 ```
 **Result:**
 ```
 This line stays
 This line also stays
+Final line stays
 ```
 
 **Empty Line Limiting:**
