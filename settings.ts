@@ -1,7 +1,7 @@
 export interface LineCleanerSettings {
 	removalStrings: string[];
-	rangeStartString: string;
-	rangeEndString: string;
+	rangeStartStrings: string[];
+	rangeEndStrings: string[];
 	cleanLinksString: string;
 	commentCleanerString: string;
 	createBackup: boolean;
@@ -19,8 +19,8 @@ export interface LineCleanerSettings {
 
 export const DEFAULT_SETTINGS: LineCleanerSettings = {
 	removalStrings: ["%% remove line %%", "rem-ln"],
-	rangeStartString: "%% remove from here %%",
-	rangeEndString: "%% remove till here %%",
+	rangeStartStrings: ["%% remove from here %%", "rm-from-here"],
+	rangeEndStrings: ["%% remove till here %%", "rm-till-here"],
 	cleanLinksString: "%% clean me %%",
 	commentCleanerString: "remove this comment",
 	createBackup: true,

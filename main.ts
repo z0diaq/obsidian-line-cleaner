@@ -80,6 +80,18 @@ export default class LineCleanerPlugin extends Plugin {
 			this.settings.removalStrings = [loadedData.removalString as string];
 			await this.saveSettings();
 		}
+		
+		// Migration: Convert old rangeStartString to rangeStartStrings array
+		if (loadedData && 'rangeStartString' in loadedData && !('rangeStartStrings' in loadedData)) {
+			this.settings.rangeStartStrings = [loadedData.rangeStartString as string];
+			await this.saveSettings();
+		}
+		
+		// Migration: Convert old rangeEndString to rangeEndStrings array
+		if (loadedData && 'rangeEndString' in loadedData && !('rangeEndStrings' in loadedData)) {
+			this.settings.rangeEndStrings = [loadedData.rangeEndString as string];
+			await this.saveSettings();
+		}
 	}
 
 	async saveSettings() {
@@ -206,25 +218,51 @@ export default class LineCleanerPlugin extends Plugin {
 	processRangeRemovals(content: string): { content: string, removals: number } {
 		let processedContent = content;
 		let removals = 0;
-		const startMarker = this.settings.rangeStartString;
-		const endMarker = this.settings.rangeEndString;
 
+		// Continue processing until no more ranges are found
 		while (true) {
-			const startIndex = processedContent.indexOf(startMarker);
-			if (startIndex === -1) break;
+			let foundRange = false;
+			let earliestStartIndex = -1;
+			let matchedStartMarker = '';
+			let matchedEndMarker = '';
 
-			const endIndex = processedContent.indexOf(endMarker, startIndex + startMarker.length);
-			if (endIndex === -1) {
+			// Find the earliest start marker among all possible start markers
+			for (const startMarker of this.settings.rangeStartStrings) {
+				if (!startMarker.trim()) continue; // Skip empty markers
+				
+				const startIndex = processedContent.indexOf(startMarker);
+				if (startIndex !== -1 && (earliestStartIndex === -1 || startIndex < earliestStartIndex)) {
+					earliestStartIndex = startIndex;
+					matchedStartMarker = startMarker;
+					foundRange = true;
+				}
+			}
+
+			if (!foundRange) break;
+
+			// Find the earliest end marker after the start marker
+			let earliestEndIndex = -1;
+			for (const endMarker of this.settings.rangeEndStrings) {
+				if (!endMarker.trim()) continue; // Skip empty markers
+				
+				const endIndex = processedContent.indexOf(endMarker, earliestStartIndex + matchedStartMarker.length);
+				if (endIndex !== -1 && (earliestEndIndex === -1 || endIndex < earliestEndIndex)) {
+					earliestEndIndex = endIndex;
+					matchedEndMarker = endMarker;
+				}
+			}
+
+			if (earliestEndIndex === -1) {
 				// Start marker found but no end marker - remove from start marker to end of content
-				const beforeStart = processedContent.substring(0, startIndex);
+				const beforeStart = processedContent.substring(0, earliestStartIndex);
 				processedContent = beforeStart;
 				removals++;
 				break;
 			}
 
 			// Extract content before start marker and after end marker
-			const beforeStart = processedContent.substring(0, startIndex);
-			const afterEnd = processedContent.substring(endIndex + endMarker.length);
+			const beforeStart = processedContent.substring(0, earliestStartIndex);
+			const afterEnd = processedContent.substring(earliestEndIndex + matchedEndMarker.length);
 			
 			// Combine the preserved parts
 			processedContent = beforeStart + afterEnd;
@@ -558,34 +596,56 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		containerEl.createEl('p', { text: 'Remove content between start and end markers, preserving partial line content.' });
 
 		new Setting(containerEl)
-			.setName('Range start marker')
-			.setDesc('Text marking the beginning of content to remove')
-			.addText(text => text
-				.setPlaceholder('%% remove from here %%')
-				.setValue(this.plugin.settings.rangeStartString)
-				.onChange(async (value) => {
-					if (value.trim() === '') {
-						new Notice('Range start marker cannot be empty');
-						return;
-					}
-					this.plugin.settings.rangeStartString = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName('Range start markers')
+			.setDesc('Text markers that begin content to remove. Enter one marker per line.')
+			.addTextArea(text => {
+				text.setPlaceholder('%% remove from here %%\nrm-from-here')
+					.setValue(this.plugin.settings.rangeStartStrings.join('\n'))
+					.onChange(async (value) => {
+						const markers = value.split('\n')
+							.map(line => line.trim())
+							.filter(line => line.length > 0);
+						
+						if (markers.length === 0) {
+							new Notice('At least one range start marker is required');
+							return;
+						}
+						
+						this.plugin.settings.rangeStartStrings = markers;
+						await this.plugin.saveSettings();
+					});
+				
+				// Set textarea height for 3 lines with scrollbar
+				text.inputEl.rows = 3;
+				text.inputEl.style.resize = 'vertical';
+				text.inputEl.style.minHeight = '60px';
+			});
 
 		new Setting(containerEl)
-			.setName('Range end marker')
-			.setDesc('Text marking the end of content to remove')
-			.addText(text => text
-				.setPlaceholder('%% remove till here %%')
-				.setValue(this.plugin.settings.rangeEndString)
-				.onChange(async (value) => {
-					if (value.trim() === '') {
-						new Notice('Range end marker cannot be empty');
-						return;
-					}
-					this.plugin.settings.rangeEndString = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName('Range end markers')
+			.setDesc('Text markers that end content to remove. Enter one marker per line.')
+			.addTextArea(text => {
+				text.setPlaceholder('%% remove till here %%\nrm-till-here')
+					.setValue(this.plugin.settings.rangeEndStrings.join('\n'))
+					.onChange(async (value) => {
+						const markers = value.split('\n')
+							.map(line => line.trim())
+							.filter(line => line.length > 0);
+						
+						if (markers.length === 0) {
+							new Notice('At least one range end marker is required');
+							return;
+						}
+						
+						this.plugin.settings.rangeEndStrings = markers;
+						await this.plugin.saveSettings();
+					});
+				
+				// Set textarea height for 3 lines with scrollbar
+				text.inputEl.rows = 3;
+				text.inputEl.style.resize = 'vertical';
+				text.inputEl.style.minHeight = '60px';
+			});
 
 		containerEl.createEl('h3', { text: 'Link Cleaning' });
 		containerEl.createEl('p', { text: 'Convert links to plain text in backticks for lines containing this marker.' });
@@ -724,10 +784,10 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		// Range Removal Example
 		const rangeExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
 		rangeExample.createEl('h4', { text: 'Range Removal' });
-		rangeExample.createEl('p', { text: 'Input:' });
-		rangeExample.createEl('pre', { text: 'some text %% remove from here %%\nline to remove\nanother line to remove\n%% remove till here %% remaining text' });
+		rangeExample.createEl('p', { text: 'Input (with multiple start/end markers):' });
+		rangeExample.createEl('pre', { text: 'some text %% remove from here %%\nline to remove\nanother line to remove\n%% remove till here %% remaining text\nmore text rm-from-here\ncontent to delete\nrm-till-here final text' });
 		rangeExample.createEl('p', { text: 'Result:' });
-		rangeExample.createEl('pre', { text: 'some text remaining text' });
+		rangeExample.createEl('pre', { text: 'some text remaining text\nmore text final text' });
 
 		// Comment Cleaning Example
 		const commentExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
@@ -781,7 +841,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		const combinedExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
 		combinedExample.createEl('h4', { text: 'Combined Processing' });
 		combinedExample.createEl('p', { text: 'Input:' });
-		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] %% clean me %%\nSome text %% remove from here %%\nDelete this content\n%% remove till here %% keep this\nText with %% comment %% and %% comment remove this comment %% more text\n%% remove line %% This line gets deleted\nrem-ln Another line to remove\nFinal line with [Google](https://google.com) %% clean me %%' });
+		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] %% clean me %%\nSome text rm-from-here\nDelete this content\nrm-till-here keep this\nText with %% comment %% and %% comment remove this comment %% more text\n%% remove line %% This line gets deleted\nrem-ln Another line to remove\nFinal line with [Google](https://google.com) %% clean me %%' });
 		combinedExample.createEl('p', { text: 'Result:' });
 		combinedExample.createEl('pre', { text: 'Keep this `Note`\nSome text keep this\nText with %% comment %% and more text\nFinal line with `Google`' });
 	}

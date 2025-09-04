@@ -50,8 +50,8 @@ Choose which cleaning features to enable. All features are enabled by default:
 - **Enable Empty Line Limiting**: Control consecutive empty lines between content
 
 **Range Removal:**
-- **Range Start Marker**: Text marking the beginning of content to remove (default: `%% remove from here %%`)
-- **Range End Marker**: Text marking the end of content to remove (default: `%% remove till here %%`)
+- **Range Start Markers**: Text markers that begin content to remove. Enter one marker per line. (default: `%% remove from here %%` and `rm-from-here`)
+- **Range End Markers**: Text markers that end content to remove. Enter one marker per line. (default: `%% remove till here %%` and `rm-till-here`)
 
 **Comment Cleaning:**
 - **Comment Cleaning Marker**: Only comments containing this marker will be removed (marker must be inside the comment) (default: `remove this comment`)
@@ -79,10 +79,14 @@ some text %% remove from here %%
 line to remove
 another line to remove
 %% remove till here %% remaining text
+more text rm-from-here
+content to delete
+rm-till-here final text
 ```
 **Result:**
 ```
 some text remaining text
+more text final text
 ```
 
 **Comment Cleaning:**
