@@ -75,21 +75,26 @@ export default class LineCleanerPlugin extends Plugin {
 		const loadedData = await this.loadData();
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
 		
-		// Migration: Convert old removalString to removalStrings array
-		if (loadedData && 'removalString' in loadedData && !('removalStrings' in loadedData)) {
-			this.settings.removalStrings = [loadedData.removalString as string];
-			await this.saveSettings();
+		// Migration configuration: old property -> new property
+		const migrations = [
+			{ oldKey: 'removalString', newKey: 'removalStrings' },
+			{ oldKey: 'rangeStartString', newKey: 'rangeStartStrings' },
+			{ oldKey: 'rangeEndString', newKey: 'rangeEndStrings' },
+			{ oldKey: 'cleanLinksString', newKey: 'cleanLinksStrings' },
+			{ oldKey: 'commentCleanerString', newKey: 'commentCleanerStrings' }
+		];
+
+		// Apply migrations
+		let needsSave = false;
+		for (const { oldKey, newKey } of migrations) {
+			if (loadedData && oldKey in loadedData && !(newKey in loadedData)) {
+				(this.settings as any)[newKey] = [loadedData[oldKey] as string];
+				needsSave = true;
+			}
 		}
-		
-		// Migration: Convert old rangeStartString to rangeStartStrings array
-		if (loadedData && 'rangeStartString' in loadedData && !('rangeStartStrings' in loadedData)) {
-			this.settings.rangeStartStrings = [loadedData.rangeStartString as string];
-			await this.saveSettings();
-		}
-		
-		// Migration: Convert old rangeEndString to rangeEndStrings array
-		if (loadedData && 'rangeEndString' in loadedData && !('rangeEndStrings' in loadedData)) {
-			this.settings.rangeEndStrings = [loadedData.rangeEndString as string];
+
+		// Save settings once if any migrations were applied
+		if (needsSave) {
 			await this.saveSettings();
 		}
 	}
@@ -296,10 +301,9 @@ export default class LineCleanerPlugin extends Plugin {
 	processCommentCleaning(content: string): { content: string, removals: number } {
 		let processedContent = content;
 		let removals = 0;
-		const cleanMarker = this.settings.commentCleanerString;
 		let searchStart = 0;
 
-		// Process content to find and remove comments containing the marker
+		// Process content to find and remove comments containing any of the markers
 		while (searchStart < processedContent.length) {
 			const startIndex = processedContent.indexOf('%%', searchStart);
 			if (startIndex === -1) break;
@@ -310,8 +314,17 @@ export default class LineCleanerPlugin extends Plugin {
 			// Extract the comment content (between the %% markers)
 			const commentContent = processedContent.substring(startIndex + 2, endIndex);
 			
-			// Check if this comment contains the clean marker
-			if (commentContent.includes(cleanMarker)) {
+			// Check if this comment contains any of the clean markers
+			let shouldRemoveComment = false;
+			for (const cleanMarker of this.settings.commentCleanerStrings) {
+				if (!cleanMarker.trim()) continue; // Skip empty markers
+				if (commentContent.includes(cleanMarker)) {
+					shouldRemoveComment = true;
+					break;
+				}
+			}
+			
+			if (shouldRemoveComment) {
 				// Remove this entire comment (including the %% markers)
 				const beforeComment = processedContent.substring(0, startIndex);
 				const afterComment = processedContent.substring(endIndex + 2);
@@ -330,12 +343,22 @@ export default class LineCleanerPlugin extends Plugin {
 
 	processLinkCleaning(content: string): { content: string, removals: number } {
 		const lines = content.split('\n');
-		const cleanMarker = this.settings.cleanLinksString;
 		let processedLines: string[] = [];
 		let removals = 0;
 
 		for (const line of lines) {
-			if (line.includes(cleanMarker)) {
+			let shouldCleanLine = false;
+			
+			// Check if line contains any of the clean link markers
+			for (const cleanMarker of this.settings.cleanLinksStrings) {
+				if (!cleanMarker.trim()) continue; // Skip empty markers
+				if (line.includes(cleanMarker)) {
+					shouldCleanLine = true;
+					break;
+				}
+			}
+
+			if (shouldCleanLine) {
 				const cleanedLine = this.convertLinksInLine(line);
 				processedLines.push(cleanedLine);
 				if (cleanedLine !== line) {
@@ -363,10 +386,17 @@ export default class LineCleanerPlugin extends Plugin {
 			return `\`${linkText}\``;
 		});
 
-		// Remove the clean me marker after processing links
-		processedLine = processedLine.replace(this.settings.cleanLinksString, '');
+		// Remove all clean link markers after processing links
+		for (const cleanMarker of this.settings.cleanLinksStrings) {
+			if (!cleanMarker.trim()) continue; // Skip empty markers
+			processedLine = processedLine.replace(new RegExp(this.escapeRegExp(cleanMarker), 'g'), '');
+		}
 
 		return processedLine;
+	}
+
+	escapeRegExp(string: string): string {
+		return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	}
 
 	processEmptyLineLimiting(content: string): { content: string, removals: number } {
@@ -648,40 +678,62 @@ class LineCleanerSettingTab extends PluginSettingTab {
 			});
 
 		containerEl.createEl('h3', { text: 'Link Cleaning' });
-		containerEl.createEl('p', { text: 'Convert links to plain text in backticks for lines containing this marker.' });
+		containerEl.createEl('p', { text: 'Convert links to plain text in backticks for lines containing any of these markers.' });
 
 		new Setting(containerEl)
-			.setName('Link cleaning marker')
-			.setDesc('Lines containing this string will have their links converted to backticked text')
-			.addText(text => text
-				.setPlaceholder('%% clean me %%')
-				.setValue(this.plugin.settings.cleanLinksString)
-				.onChange(async (value) => {
-					if (value.trim() === '') {
-						new Notice('Link cleaning marker cannot be empty');
-						return;
-					}
-					this.plugin.settings.cleanLinksString = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName('Link cleaning markers')
+			.setDesc('Lines containing any of these strings will have their links converted to backticked text. Enter one marker per line.')
+			.addTextArea(text => {
+				text.setPlaceholder('%% clean me %%\nclean-ln')
+					.setValue(this.plugin.settings.cleanLinksStrings.join('\n'))
+					.onChange(async (value) => {
+						const markers = value.split('\n')
+							.map(line => line.trim())
+							.filter(line => line.length > 0);
+						
+						if (markers.length === 0) {
+							new Notice('At least one link cleaning marker is required');
+							return;
+						}
+						
+						this.plugin.settings.cleanLinksStrings = markers;
+						await this.plugin.saveSettings();
+					});
+				
+				// Set textarea height for 3 lines with scrollbar
+				text.inputEl.rows = 3;
+				text.inputEl.style.resize = 'vertical';
+				text.inputEl.style.minHeight = '60px';
+			});
 
 		containerEl.createEl('h3', { text: 'Comment Cleaning' });
-		containerEl.createEl('p', { text: 'Remove specific %% comments %% that contain this marker. Only the comment containing the marker is removed.' });
+		containerEl.createEl('p', { text: 'Remove specific %% comments %% that contain any of these markers. Only comments containing the markers are removed.' });
 
 		new Setting(containerEl)
-			.setName('Comment cleaning marker')
-			.setDesc('Only comments containing this marker will be removed (marker must be inside the comment)')
-			.addText(text => text
-				.setPlaceholder('remove this comment')
-				.setValue(this.plugin.settings.commentCleanerString)
-				.onChange(async (value) => {
-					if (value.trim() === '') {
-						new Notice('Comment cleaning marker cannot be empty');
-						return;
-					}
-					this.plugin.settings.commentCleanerString = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName('Comment cleaning markers')
+			.setDesc('Only comments containing any of these markers will be removed (markers must be inside the comments). Enter one marker per line.')
+			.addTextArea(text => {
+				text.setPlaceholder('remove this comment\nrm-cmt')
+					.setValue(this.plugin.settings.commentCleanerStrings.join('\n'))
+					.onChange(async (value) => {
+						const markers = value.split('\n')
+							.map(line => line.trim())
+							.filter(line => line.length > 0);
+						
+						if (markers.length === 0) {
+							new Notice('At least one comment cleaning marker is required');
+							return;
+						}
+						
+						this.plugin.settings.commentCleanerStrings = markers;
+						await this.plugin.saveSettings();
+					});
+				
+				// Set textarea height for 3 lines with scrollbar
+				text.inputEl.rows = 3;
+				text.inputEl.style.resize = 'vertical';
+				text.inputEl.style.minHeight = '60px';
+			});
 
 		containerEl.createEl('h3', { text: 'Single Line Removal' });
 		containerEl.createEl('p', { text: 'Remove entire lines containing any of these markers (processed after comment and link cleaning).' });
@@ -792,18 +844,18 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		// Comment Cleaning Example
 		const commentExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
 		commentExample.createEl('h4', { text: 'Comment Cleaning' });
-		commentExample.createEl('p', { text: 'Input:' });
-		commentExample.createEl('pre', { text: 'This text %% this comment stays %% has comments %% remove this comment %%\nAnother line %% inline comment %% with %% another comment remove this comment %% text' });
+		commentExample.createEl('p', { text: 'Input (with multiple comment markers):' });
+		commentExample.createEl('pre', { text: 'This text %% this comment stays %% has comments %% remove this comment %%\nAnother line %% inline comment %% with %% another comment rm-cmt %% text\nMore text %% keep this %% and %% rm-cmt delete this %% end' });
 		commentExample.createEl('p', { text: 'Result:' });
-		commentExample.createEl('pre', { text: 'This text %% this comment stays %% has comments\nAnother line %% inline comment %% with text' });
+		commentExample.createEl('pre', { text: 'This text %% this comment stays %% has comments\nAnother line %% inline comment %% with text\nMore text %% keep this %% and end' });
 
 		// Link Cleaning Example
 		const linkExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
 		linkExample.createEl('h4', { text: 'Link Cleaning' });
-		linkExample.createEl('p', { text: 'Input:' });
-		linkExample.createEl('pre', { text: 'Check [[My Note]] and [Google](https://google.com) %% clean me %%' });
+		linkExample.createEl('p', { text: 'Input (with multiple link markers):' });
+		linkExample.createEl('pre', { text: 'Check [[My Note]] and [Google](https://google.com) %% clean me %%\nAnother line with [[Another Note|Display]] clean-ln here\nNormal line with [[Keep Link]] stays' });
 		linkExample.createEl('p', { text: 'Result:' });
-		linkExample.createEl('pre', { text: 'Check `My Note` and `Google`' });
+		linkExample.createEl('pre', { text: 'Check `My Note` and `Google`\nAnother line with `Display` here\nNormal line with [[Keep Link]] stays' });
 
 		// Single Line Removal Example
 		const singleExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
@@ -841,7 +893,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		const combinedExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
 		combinedExample.createEl('h4', { text: 'Combined Processing' });
 		combinedExample.createEl('p', { text: 'Input:' });
-		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] %% clean me %%\nSome text rm-from-here\nDelete this content\nrm-till-here keep this\nText with %% comment %% and %% comment remove this comment %% more text\n%% remove line %% This line gets deleted\nrem-ln Another line to remove\nFinal line with [Google](https://google.com) %% clean me %%' });
+		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] clean-ln\nSome text rm-from-here\nDelete this content\nrm-till-here keep this\nText with %% comment %% and %% comment rm-cmt %% more text\n%% remove line %% This line gets deleted\nrem-ln Another line to remove\nFinal line with [Google](https://google.com) %% clean me %%' });
 		combinedExample.createEl('p', { text: 'Result:' });
 		combinedExample.createEl('pre', { text: 'Keep this `Note`\nSome text keep this\nText with %% comment %% and more text\nFinal line with `Google`' });
 	}

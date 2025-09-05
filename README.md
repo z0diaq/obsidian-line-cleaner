@@ -54,10 +54,10 @@ Choose which cleaning features to enable. All features are enabled by default:
 - **Range End Markers**: Text markers that end content to remove. Enter one marker per line. (default: `%% remove till here %%` and `rm-till-here`)
 
 **Comment Cleaning:**
-- **Comment Cleaning Marker**: Only comments containing this marker will be removed (marker must be inside the comment) (default: `remove this comment`)
+- **Comment Cleaning Markers**: Only comments containing any of these markers will be removed (markers must be inside the comments). Enter one marker per line. (default: `remove this comment` and `rm-cmt`)
 
 **Link Cleaning:**
-- **Link Cleaning Marker**: Lines containing this string will have their links converted to backticked text (default: `%% clean me %%`)
+- **Link Cleaning Markers**: Lines containing any of these strings will have their links converted to backticked text. Enter one marker per line. (default: `%% clean me %%` and `clean-ln`)
 
 **Single Line Removal:**
 - **Single Line Removal Markers**: Lines containing any of these strings will be completely removed. Enter one marker per line. (default: `%% remove line %%` and `rem-ln`)
@@ -92,21 +92,27 @@ more text final text
 **Comment Cleaning:**
 ```
 This text %% this comment stays %% has comments %% remove this comment %%
-Another line %% inline comment %% with %% another comment remove this comment %% text
+Another line %% inline comment %% with %% another comment rm-cmt %% text
+More text %% keep this %% and %% rm-cmt delete this %% end
 ```
 **Result:**
 ```
 This text %% this comment stays %% has comments
 Another line %% inline comment %% with text
+More text %% keep this %% and end
 ```
 
 **Link Cleaning:**
 ```
 Check [[My Note]] and [Google](https://google.com) %% clean me %%
+Another line with [[Another Note|Display]] clean-ln here
+Normal line with [[Keep Link]] stays
 ```
 **Result:**
 ```
 Check `My Note` and `Google`
+Another line with `Display` here
+Normal line with [[Keep Link]] stays
 ```
 
 **Single Line Removal:**
