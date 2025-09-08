@@ -33,7 +33,7 @@ A powerful Obsidian plugin that removes or cleans lines containing specific mark
 ## Usage
 
 ### Access Methods
-1. **Ribbon Button**: Click the trash icon in the left sidebar to clean the current active file
+1. **Ribbon Button**: Click the eraser icon in the left sidebar to clean the current active file
 2. **File Context Menu**: Right-click any file in the file explorer and select "Clean lines"
 3. **Editor Context Menu**: Right-click in the editor and select "Clean lines"
 4. **Command Palette**: Search for "Clean lines from current file"

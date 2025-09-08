@@ -8,7 +8,7 @@ export default class LineCleanerPlugin extends Plugin {
 		await this.loadSettings();
 
 		// Add ribbon icon
-		const ribbonIconEl = this.addRibbonIcon('trash-2', 'Clean Lines', (evt: MouseEvent) => {
+		const ribbonIconEl = this.addRibbonIcon('eraser', 'Clean Lines', (evt: MouseEvent) => {
 			this.cleanCurrentFile();
 		});
 		ribbonIconEl.addClass('line-cleaner-ribbon-class');
@@ -812,7 +812,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		containerEl.createEl('h3', { text: 'Access Methods' });
 		containerEl.createEl('p', { text: 'You can clean lines from files using:' });
 		const usageList = containerEl.createEl('ul');
-		usageList.createEl('li', { text: 'Ribbon button (trash icon) - cleans current active file' });
+		usageList.createEl('li', { text: 'Ribbon button (eraser icon) - cleans current active file' });
 		usageList.createEl('li', { text: 'Right-click context menu on any file' });
 		usageList.createEl('li', { text: 'Right-click context menu in editor' });
 		usageList.createEl('li', { text: 'Command palette: "Clean lines, ranges, and links from current file"' });
