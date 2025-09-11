@@ -1,12 +1,11 @@
 {
 	"id": "line-cleaner",
 	"name": "Lines Cleaner",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"minAppVersion": "0.15.0",
 	"description": "Remove or clean lines containing specific markers in file or selection with configurable backup options",
 	"author": "Piotr Tkaczyk",
-	"authorUrl": "https://github.com/z0diaq",
+	"authorUrl": "https://github.com/z0diaq/aboutMe",
 	"fundingUrl": "https://buymeacoffee.com/z0diaq",
-	"isDesktopOnly": false,
-	"repositoryUrl": "https://github.com/z0diaq/obsidian-line-cleaner"
+	"isDesktopOnly": false
 }
