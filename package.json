@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-line-cleaner",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"description": "Obsidian plugin to remove lines containing specific strings with backup functionality",
 	"main": "main.js",
 	"scripts": {
