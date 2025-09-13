@@ -647,8 +647,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				
 				// Set textarea height for 3 lines with scrollbar
 				text.inputEl.rows = 3;
-				text.inputEl.style.resize = 'vertical';
-				text.inputEl.style.minHeight = '60px';
+				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
 		new Setting(containerEl)
@@ -673,8 +672,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				
 				// Set textarea height for 3 lines with scrollbar
 				text.inputEl.rows = 3;
-				text.inputEl.style.resize = 'vertical';
-				text.inputEl.style.minHeight = '60px';
+				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
 		containerEl.createEl('h3', { text: 'Link Cleaning' });
@@ -702,8 +700,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				
 				// Set textarea height for 3 lines with scrollbar
 				text.inputEl.rows = 3;
-				text.inputEl.style.resize = 'vertical';
-				text.inputEl.style.minHeight = '60px';
+				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
 		containerEl.createEl('h3', { text: 'Comment Cleaning' });
@@ -731,8 +728,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				
 				// Set textarea height for 3 lines with scrollbar
 				text.inputEl.rows = 3;
-				text.inputEl.style.resize = 'vertical';
-				text.inputEl.style.minHeight = '60px';
+				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
 		containerEl.createEl('h3', { text: 'Single Line Removal' });
@@ -760,8 +756,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				
 				// Set textarea height for 3 lines with scrollbar
 				text.inputEl.rows = 3;
-				text.inputEl.style.resize = 'vertical';
-				text.inputEl.style.minHeight = '60px';
+				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
 		containerEl.createEl('h3', { text: 'Empty Line Limiting' });
