@@ -8,7 +8,7 @@ export default class LineCleanerPlugin extends Plugin {
 		await this.loadSettings();
 
 		// Add ribbon icon
-		const ribbonIconEl = this.addRibbonIcon('eraser', 'Clean Lines', (evt: MouseEvent) => {
+		const ribbonIconEl = this.addRibbonIcon('eraser', 'Clean lines', (evt: MouseEvent) => {
 			this.cleanCurrentFile();
 		});
 		ribbonIconEl.addClass('line-cleaner-ribbon-class');
@@ -111,7 +111,7 @@ export default class LineCleanerPlugin extends Plugin {
         }
         
         if (activeFile.extension !== 'md') {
-            new Notice('Lines Cleaner only works with Markdown files');
+            new Notice('Lines cleaner only works with Markdown files');
             return;
         }
         
@@ -499,7 +499,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		// Create header
-		containerEl.createEl('h2', { text: 'Lines Cleaner' });
+		containerEl.createEl('h2', { text: 'Lines cleaner' });
 
 		// Create tab navigation
 		const tabContainer = containerEl.createDiv({ cls: 'line-cleaner-tabs' });
@@ -538,11 +538,11 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 	private displaySettingsTab(containerEl: HTMLElement): void {
 		// Feature Selection Section
-		containerEl.createEl('h3', { text: 'Feature Selection' });
+		containerEl.createEl('h3', { text: 'Feature selection' });
 		containerEl.createEl('p', { text: 'Which features do you need?' });
 
 		new Setting(containerEl)
-			.setName('Enable Range Removal')
+			.setName('Enable range removal')
 			.setDesc('Remove content between start and end markers')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.enableRangeRemoval)
@@ -552,7 +552,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Enable Comment Cleaning')
+			.setName('Enable comment cleaning')
 			.setDesc('Remove specific %% comments %% containing markers')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.enableCommentCleaning)
@@ -562,7 +562,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Enable Link Cleaning')
+			.setName('Enable link cleaning')
 			.setDesc('Convert links to plain text in backticks')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.enableLinkCleaning)
@@ -572,7 +572,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Enable Single Line Removal')
+			.setName('Enable single line removal')
 			.setDesc('Remove entire lines containing markers')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.enableSingleLineRemoval)
@@ -582,7 +582,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Enable Empty Line Limiting')
+			.setName('Enable empty line limiting')
 			.setDesc('Control consecutive empty lines between content')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.enableEmptyLineLimiting)
@@ -622,7 +622,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				}));
 	
 
-		containerEl.createEl('h3', { text: 'Range Removal' });
+		containerEl.createEl('h3', { text: 'Range removal' });
 		containerEl.createEl('p', { text: 'Remove content between start and end markers, preserving partial line content.' });
 
 		new Setting(containerEl)
@@ -675,7 +675,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
-		containerEl.createEl('h3', { text: 'Link Cleaning' });
+		containerEl.createEl('h3', { text: 'Link cleaning' });
 		containerEl.createEl('p', { text: 'Convert links to plain text in backticks for lines containing any of these markers.' });
 
 		new Setting(containerEl)
@@ -703,7 +703,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
-		containerEl.createEl('h3', { text: 'Comment Cleaning' });
+		containerEl.createEl('h3', { text: 'Comment cleaning' });
 		containerEl.createEl('p', { text: 'Remove specific %% comments %% that contain any of these markers. Only comments containing the markers are removed.' });
 
 		new Setting(containerEl)
@@ -731,7 +731,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
-		containerEl.createEl('h3', { text: 'Single Line Removal' });
+		containerEl.createEl('h3', { text: 'Single line removal' });
 		containerEl.createEl('p', { text: 'Remove entire lines containing any of these markers (processed after comment and link cleaning).' });
 
 		new Setting(containerEl)
@@ -759,7 +759,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
-		containerEl.createEl('h3', { text: 'Empty Line Limiting' });
+		containerEl.createEl('h3', { text: 'Empty line limiting' });
 		containerEl.createEl('p', { text: 'Control the maximum number of consecutive empty lines to keep between content lines.' });
 
 		new Setting(containerEl)
@@ -774,7 +774,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		containerEl.createEl('h3', { text: 'Backup Options' });
+		containerEl.createEl('h3', { text: 'Backup options' });
 
 		// Helper function to generate example filename
 		const generateExampleFilename = (format: string): string => {
@@ -804,7 +804,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 	}
 
 	private displayUsageTab(containerEl: HTMLElement): void {
-		containerEl.createEl('h3', { text: 'Access Methods' });
+		containerEl.createEl('h3', { text: 'Access methods' });
 		containerEl.createEl('p', { text: 'You can clean lines from files using:' });
 		const usageList = containerEl.createEl('ul');
 		usageList.createEl('li', { text: 'Ribbon button (eraser icon) - cleans current active file' });
@@ -812,12 +812,12 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		usageList.createEl('li', { text: 'Right-click context menu in editor' });
 		usageList.createEl('li', { text: 'Command palette: "Clean lines, ranges, and links from current file"' });
 
-		containerEl.createEl('h3', { text: 'Processing Order' });
+		containerEl.createEl('h3', { text: 'Processing order' });
 		containerEl.createEl('p', { text: 'The plugin processes content in this order:' });
 		const orderList = containerEl.createEl('ol');
-		orderList.createEl('li', { text: 'Range Removal (removes content between start/end markers)' });
-		orderList.createEl('li', { text: 'Comment Cleaning (removes %% comments %% from marked lines)' });
-		orderList.createEl('li', { text: 'Link Cleaning (converts links to backticked text)' });
+		orderList.createEl('li', { text: 'Range removal (removes content between start/end markers)' });
+		orderList.createEl('li', { text: 'Comment cleaning (removes %% comments %% from marked lines)' });
+		orderList.createEl('li', { text: 'Link cleaning (converts links to backticked text)' });
 		orderList.createEl('li', { text: 'Single Line Removal (removes entire lines with markers)' });
 		orderList.createEl('li', { text: 'Empty List Item Removal (removes empty list items)' });
 		orderList.createEl('li', { text: 'Finished Tasks Removal (removes completed tasks)' });
@@ -854,7 +854,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Single Line Removal Example
 		const singleExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		singleExample.createEl('h4', { text: 'Single Line Removal' });
+		singleExample.createEl('h4', { text: 'Single line removal' });
 		singleExample.createEl('p', { text: 'Input (with markers "%% remove line %%" and "rem-ln"):' });
 		singleExample.createEl('pre', { text: 'This line stays\n%% remove line %% This entire line is removed\nThis line also stays\nrem-ln Another line to remove\nFinal line stays' });
 		singleExample.createEl('p', { text: 'Result:' });
@@ -862,7 +862,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Empty Line Limiting Example
 		const emptyLineExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		emptyLineExample.createEl('h4', { text: 'Empty Line Limiting' });
+		emptyLineExample.createEl('h4', { text: 'Empty line limiting' });
 		emptyLineExample.createEl('p', { text: 'Input (with setting "Keep at most 1 consecutive empty line"):' });
 		emptyLineExample.createEl('pre', { text: 'First paragraph\n\n\n\n\nSecond paragraph\n\n\nThird paragraph' });
 		emptyLineExample.createEl('p', { text: 'Result:' });
@@ -870,26 +870,26 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Empty List Item Removal Example
 		const emptyListExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		emptyListExample.createEl('h4', { text: 'Empty List Item Removal' });
+		emptyListExample.createEl('h4', { text: 'Empty list item removal' });
 		emptyListExample.createEl('p', { text: 'Input (with "Remove empty list items" enabled):' });
-		emptyListExample.createEl('pre', { text: 'Task list:\n- First task\n- \n- [ ]\n- [x]\n- Second task\n- [ ] Third task' });
+		emptyListExample.createEl('pre', { text: 'Task list:\n- First task.\n- Second task.\n- [ ] Third task.' });
 		emptyListExample.createEl('p', { text: 'Result:' });
-		emptyListExample.createEl('pre', { text: 'Task list:\n- First task\n- Second task\n- [ ] Third task' });
+		emptyListExample.createEl('pre', { text: 'Task list:\n- First task.\n- Second task.\n- [ ] Third task.' });
 
 		// Finished Tasks Removal Example
 		const finishedTasksExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		finishedTasksExample.createEl('h4', { text: 'Finished Tasks Removal' });
+		finishedTasksExample.createEl('h4', { text: 'Finished tasks removal' });
 		finishedTasksExample.createEl('p', { text: 'Input (with "Remove finished tasks" enabled):' });
-		finishedTasksExample.createEl('pre', { text: 'My tasks:\n- [ ] Todo item\n- [x] Completed task\n- [X] Another completed task\n- [ ] Still pending\n- [x] Done with this one' });
+		finishedTasksExample.createEl('pre', { text: 'My tasks:\n- [ ] Todo item.\n- [x] Completed task.\n- [X] Another completed task.\n- [ ] Still pending.\n- [x] Done with this one.' });
 		finishedTasksExample.createEl('p', { text: 'Result:' });
-		finishedTasksExample.createEl('pre', { text: 'My tasks:\n- [ ] Todo item\n- [ ] Still pending' });
+		finishedTasksExample.createEl('pre', { text: 'My tasks:\n- [ ] Todo item.\n- [ ] Still pending.' });
 
 		// Combined Example
 		const combinedExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		combinedExample.createEl('h4', { text: 'Combined Processing' });
+		combinedExample.createEl('h4', { text: 'Combined processing' });
 		combinedExample.createEl('p', { text: 'Input:' });
 		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] clean-ln\nSome text rm-from-here\nDelete this content\nrm-till-here keep this\nText with %% comment %% and %% comment rm-cmt %% more text\n%% remove line %% This line gets deleted\nrem-ln Another line to remove\nFinal line with [Google](https://google.com) %% clean me %%' });
 		combinedExample.createEl('p', { text: 'Result:' });
-		combinedExample.createEl('pre', { text: 'Keep this `Note`\nSome text keep this\nText with %% comment %% and more text\nFinal line with `Google`' });
+		combinedExample.createEl('pre', { text: 'Keep this `Note`.\nSome text keep this.\nText with %% comment %% and more text.\nFinal line with `Google`.' });
 	}
 }
