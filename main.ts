@@ -9,7 +9,7 @@ export default class LineCleanerPlugin extends Plugin {
 
 		// Add ribbon icon
 		const ribbonIconEl = this.addRibbonIcon('eraser', 'Clean lines', (evt: MouseEvent) => {
-			this.cleanCurrentFile();
+			void this.cleanCurrentFile();
 		});
 		ribbonIconEl.addClass('line-cleaner-ribbon-class');
 
@@ -18,7 +18,7 @@ export default class LineCleanerPlugin extends Plugin {
 			id: 'clean-lines',
 			name: 'Clean lines, ranges, and links from current file',
 			callback: () => {
-				this.cleanCurrentFile();
+				void this.cleanCurrentFile();
 			}
 		});
 
@@ -51,7 +51,7 @@ export default class LineCleanerPlugin extends Plugin {
 						.setIcon('eraser')
 						.onClick(async () => {
 							if (hasSelection) {
-								await this.cleanSelection(editor);
+								this.cleanSelection(editor);
 							} else {
 								await this.cleanCurrentFile();
 							}
@@ -88,7 +88,7 @@ export default class LineCleanerPlugin extends Plugin {
 		let needsSave = false;
 		for (const { oldKey, newKey } of migrations) {
 			if (loadedData && oldKey in loadedData && !(newKey in loadedData)) {
-				(this.settings as any)[newKey] = [loadedData[oldKey] as string];
+				(this.settings as unknown as Record<string, string[]>)[newKey] = [loadedData[oldKey] as string];
 				needsSave = true;
 			}
 		}
@@ -168,7 +168,7 @@ export default class LineCleanerPlugin extends Plugin {
 		return { content: processedContent, removals: totalRemovals };
 	}
 
-	async cleanSelection(editor: Editor) {
+	cleanSelection(editor: Editor): void {
 		try {
 			const selection = editor.getSelection();
 			if (!selection) {
@@ -499,7 +499,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		// Create header
-		containerEl.createEl('h2', { text: 'Lines cleaner' });
+		new Setting(containerEl).setName('Line cleaner').setHeading();
 
 		// Create tab navigation
 		const tabContainer = containerEl.createDiv({ cls: 'line-cleaner-tabs' });
@@ -538,7 +538,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 	private displaySettingsTab(containerEl: HTMLElement): void {
 		// Feature Selection Section
-		containerEl.createEl('h3', { text: 'Feature selection' });
+		new Setting(containerEl).setName('Feature selection').setHeading();
 		containerEl.createEl('p', { text: 'Which features do you need?' });
 
 		new Setting(containerEl)
@@ -622,7 +622,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				}));
 	
 
-		containerEl.createEl('h3', { text: 'Range removal' });
+		new Setting(containerEl).setName('Range removal').setHeading();
 		containerEl.createEl('p', { text: 'Remove content between start and end markers, preserving partial line content.' });
 
 		new Setting(containerEl)
@@ -675,7 +675,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
-		containerEl.createEl('h3', { text: 'Link cleaning' });
+		new Setting(containerEl).setName('Link cleaning').setHeading();
 		containerEl.createEl('p', { text: 'Convert links to plain text in backticks for lines containing any of these markers.' });
 
 		new Setting(containerEl)
@@ -703,7 +703,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
-		containerEl.createEl('h3', { text: 'Comment cleaning' });
+		new Setting(containerEl).setName('Comment cleaning').setHeading();
 		containerEl.createEl('p', { text: 'Remove specific %% comments %% that contain any of these markers. Only comments containing the markers are removed.' });
 
 		new Setting(containerEl)
@@ -731,7 +731,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
-		containerEl.createEl('h3', { text: 'Single line removal' });
+		new Setting(containerEl).setName('Single line removal').setHeading();
 		containerEl.createEl('p', { text: 'Remove entire lines containing any of these markers (processed after comment and link cleaning).' });
 
 		new Setting(containerEl)
@@ -759,7 +759,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 				text.inputEl.addClass('line-cleaner-textarea');
 			});
 
-		containerEl.createEl('h3', { text: 'Empty line limiting' });
+		new Setting(containerEl).setName('Empty line limiting').setHeading();
 		containerEl.createEl('p', { text: 'Control the maximum number of consecutive empty lines to keep between content lines.' });
 
 		new Setting(containerEl)
@@ -774,7 +774,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		containerEl.createEl('h3', { text: 'Backup options' });
+		new Setting(containerEl).setName('Backup options').setHeading();
 
 		// Helper function to generate example filename
 		const generateExampleFilename = (format: string): string => {
@@ -804,7 +804,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 	}
 
 	private displayUsageTab(containerEl: HTMLElement): void {
-		containerEl.createEl('h3', { text: 'Access methods' });
+		new Setting(containerEl).setName('Access methods').setHeading();
 		containerEl.createEl('p', { text: 'You can clean lines from files using:' });
 		const usageList = containerEl.createEl('ul');
 		usageList.createEl('li', { text: 'Ribbon button (eraser icon) - cleans current active file' });
@@ -812,7 +812,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		usageList.createEl('li', { text: 'Right-click context menu in editor' });
 		usageList.createEl('li', { text: 'Command palette: "Clean lines, ranges, and links from current file"' });
 
-		containerEl.createEl('h3', { text: 'Processing order' });
+		new Setting(containerEl).setName('Processing order').setHeading();
 		containerEl.createEl('p', { text: 'The plugin processes content in this order:' });
 		const orderList = containerEl.createEl('ol');
 		orderList.createEl('li', { text: 'Range removal (removes content between start/end markers)' });
@@ -826,11 +826,11 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		const noticeBackupReason = orderList.createEl('ul');
 		noticeBackupReason.createEl('li', { text: 'Notice: backup created from source data but as a last step to avoid creating unnecessary files if no cleaning is done' });
 
-		containerEl.createEl('h3', { text: 'Examples' });
+		new Setting(containerEl).setName('Examples').setHeading();
 		
 		// Range Removal Example
 		const rangeExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		rangeExample.createEl('h4', { text: 'Range Removal' });
+		new Setting(rangeExample).setName('Range removal').setHeading();
 		rangeExample.createEl('p', { text: 'Input (with multiple start/end markers):' });
 		rangeExample.createEl('pre', { text: 'some text %% remove from here %%\nline to remove\nanother line to remove\n%% remove till here %% remaining text\nmore text rm-from-here\ncontent to delete\nrm-till-here final text' });
 		rangeExample.createEl('p', { text: 'Result:' });
@@ -838,7 +838,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Comment Cleaning Example
 		const commentExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		commentExample.createEl('h4', { text: 'Comment Cleaning' });
+		new Setting(commentExample).setName('Comment cleaning').setHeading();
 		commentExample.createEl('p', { text: 'Input (with multiple comment markers):' });
 		commentExample.createEl('pre', { text: 'This text %% this comment stays %% has comments %% remove this comment %%\nAnother line %% inline comment %% with %% another comment rm-cmt %% text\nMore text %% keep this %% and %% rm-cmt delete this %% end' });
 		commentExample.createEl('p', { text: 'Result:' });
@@ -846,7 +846,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Link Cleaning Example
 		const linkExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		linkExample.createEl('h4', { text: 'Link Cleaning' });
+		new Setting(linkExample).setName('Link cleaning').setHeading();
 		linkExample.createEl('p', { text: 'Input (with multiple link markers):' });
 		linkExample.createEl('pre', { text: 'Check [[My Note]] and [Google](https://google.com) %% clean me %%\nAnother line with [[Another Note|Display]] clean-ln here\nNormal line with [[Keep Link]] stays' });
 		linkExample.createEl('p', { text: 'Result:' });
@@ -854,7 +854,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Single Line Removal Example
 		const singleExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		singleExample.createEl('h4', { text: 'Single line removal' });
+		new Setting(singleExample).setName('Single line removal').setHeading();
 		singleExample.createEl('p', { text: 'Input (with markers "%% remove line %%" and "rem-ln"):' });
 		singleExample.createEl('pre', { text: 'This line stays\n%% remove line %% This entire line is removed\nThis line also stays\nrem-ln Another line to remove\nFinal line stays' });
 		singleExample.createEl('p', { text: 'Result:' });
@@ -862,7 +862,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Empty Line Limiting Example
 		const emptyLineExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		emptyLineExample.createEl('h4', { text: 'Empty line limiting' });
+		new Setting(emptyLineExample).setName('Empty line limiting').setHeading();
 		emptyLineExample.createEl('p', { text: 'Input (with setting "Keep at most 1 consecutive empty line"):' });
 		emptyLineExample.createEl('pre', { text: 'First paragraph\n\n\n\n\nSecond paragraph\n\n\nThird paragraph' });
 		emptyLineExample.createEl('p', { text: 'Result:' });
@@ -870,7 +870,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Empty List Item Removal Example
 		const emptyListExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		emptyListExample.createEl('h4', { text: 'Empty list item removal' });
+		new Setting(emptyListExample).setName('Empty list item removal').setHeading();
 		emptyListExample.createEl('p', { text: 'Input (with "Remove empty list items" enabled):' });
 		emptyListExample.createEl('pre', { text: 'Task list:\n- First task.\n- Second task.\n- [ ] Third task.' });
 		emptyListExample.createEl('p', { text: 'Result:' });
@@ -878,7 +878,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Finished Tasks Removal Example
 		const finishedTasksExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		finishedTasksExample.createEl('h4', { text: 'Finished tasks removal' });
+		new Setting(finishedTasksExample).setName('Finished tasks removal').setHeading();
 		finishedTasksExample.createEl('p', { text: 'Input (with "Remove finished tasks" enabled):' });
 		finishedTasksExample.createEl('pre', { text: 'My tasks:\n- [ ] Todo item.\n- [x] Completed task.\n- [X] Another completed task.\n- [ ] Still pending.\n- [x] Done with this one.' });
 		finishedTasksExample.createEl('p', { text: 'Result:' });
@@ -886,7 +886,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Combined Example
 		const combinedExample = containerEl.createDiv({ cls: 'line-cleaner-example' });
-		combinedExample.createEl('h4', { text: 'Combined processing' });
+		new Setting(combinedExample).setName('Combined processing').setHeading();
 		combinedExample.createEl('p', { text: 'Input:' });
 		combinedExample.createEl('pre', { text: 'Keep this [[Important Note|Note]] clean-ln\nSome text rm-from-here\nDelete this content\nrm-till-here keep this\nText with %% comment %% and %% comment rm-cmt %% more text\n%% remove line %% This line gets deleted\nrem-ln Another line to remove\nFinal line with [Google](https://google.com) %% clean me %%' });
 		combinedExample.createEl('p', { text: 'Result:' });
