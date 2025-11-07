@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, Menu, moment } from 'obsidian';
+import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, TFile, Menu, moment } from 'obsidian';
 import { LineCleanerSettings, DEFAULT_SETTINGS } from './settings';
 
 export default class LineCleanerPlugin extends Plugin {
@@ -603,7 +603,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Remove finished tasks')
-			.setDesc('Remove lines containing completed tasks like "- [x] Task completed" or "- [X] Another task"')
+			.setDesc('Remove lines containing completed tasks like "- [x] Task completed" or "- [x] Another task".')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.removeFinishedTasks)
 				.onChange(async (value) => {
@@ -818,11 +818,11 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		orderList.createEl('li', { text: 'Range removal (removes content between start/end markers)' });
 		orderList.createEl('li', { text: 'Comment cleaning (removes %% comments %% from marked lines)' });
 		orderList.createEl('li', { text: 'Link cleaning (converts links to backticked text)' });
-		orderList.createEl('li', { text: 'Single Line Removal (removes entire lines with markers)' });
-		orderList.createEl('li', { text: 'Empty List Item Removal (removes empty list items)' });
-		orderList.createEl('li', { text: 'Finished Tasks Removal (removes completed tasks)' });
-		orderList.createEl('li', { text: 'Empty Line Limiting (reduces consecutive empty lines)' });
-		orderList.createEl('li', { text: 'Backup Creation (if enabled) and file save' });
+		orderList.createEl('li', { text: 'Single line removal (removes entire lines with markers)' });
+		orderList.createEl('li', { text: 'Empty list item removal (removes empty list items)' });
+		orderList.createEl('li', { text: 'Finished tasks removal (removes completed tasks)' });
+		orderList.createEl('li', { text: 'Empty line limiting (reduces consecutive empty lines)' });
+		orderList.createEl('li', { text: 'Backup creation (if enabled) and file save' });
 		const noticeBackupReason = orderList.createEl('ul');
 		noticeBackupReason.createEl('li', { text: 'Notice: backup created from source data but as a last step to avoid creating unnecessary files if no cleaning is done' });
 
