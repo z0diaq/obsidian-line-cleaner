@@ -487,7 +487,7 @@ export default class LineCleanerPlugin extends Plugin {
 
 class LineCleanerSettingTab extends PluginSettingTab {
 	plugin: LineCleanerPlugin;
-	private activeTab: 'settings' | 'usage' = 'settings';
+	private activeTab: 'options' | 'usage' = 'options';
 
 	constructor(app: App, plugin: LineCleanerPlugin) {
 		super(app, plugin);
@@ -505,8 +505,8 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		const tabContainer = containerEl.createDiv({ cls: 'line-cleaner-tabs' });
 		
 		const settingsTab = tabContainer.createEl('button', {
-			text: 'Settings',
-			cls: this.activeTab === 'settings' ? 'line-cleaner-tab active' : 'line-cleaner-tab'
+			text: 'options',
+			cls: this.activeTab === 'options' ? 'line-cleaner-tab active' : 'line-cleaner-tab'
 		});
 		
 		const usageTab = tabContainer.createEl('button', {
@@ -516,7 +516,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 
 		// Tab click handlers
 		settingsTab.addEventListener('click', () => {
-			this.activeTab = 'settings';
+			this.activeTab = 'options';
 			this.display();
 		});
 
@@ -529,7 +529,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		const contentEl = containerEl.createDiv({ cls: 'line-cleaner-tab-content' });
 
 		// Display appropriate tab content
-		if (this.activeTab === 'settings') {
+		if (this.activeTab === 'options') {
 			this.displaySettingsTab(contentEl);
 		} else {
 			this.displayUsageTab(contentEl);
