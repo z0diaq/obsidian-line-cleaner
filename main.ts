@@ -505,7 +505,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 		const tabContainer = containerEl.createDiv({ cls: 'line-cleaner-tabs' });
 		
 		const settingsTab = tabContainer.createEl('button', {
-			text: 'options',
+			text: 'Options',
 			cls: this.activeTab === 'options' ? 'line-cleaner-tab active' : 'line-cleaner-tab'
 		});
 		
@@ -774,7 +774,7 @@ class LineCleanerSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		new Setting(containerEl).setName('Backup options').setHeading();
+		new Setting(containerEl).setName('Backup').setHeading();
 
 		// Helper function to generate example filename
 		const generateExampleFilename = (format: string): string => {
